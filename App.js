@@ -1,15 +1,15 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 // Importação das telas
-import TelaLogin from './Telas/1.Login';
-import TelaAprendizInicio from './Telas/Aprendiz/2.Inicio';
-import TelaAprendizRegistroPonto from './Telas/Aprendiz/4.RegistroPonto';
-import TelaAprendizJustificativas from './Telas/Aprendiz/3.Justificativas';
-import TelaGestorDeshboard from './Telas/Gestor/5.Deshboard';
-import TelaGestorRegistrarPonto from './Telas/Gestor/6.RegistrarPonto';
-import TelaGestorJustificativas from './Telas/Gestor/7.Justificativas';
-import TelaGestorUsuario from './Telas/Gestor/8.Usuario';
-import TelaGestorRelatorio from './Telas/Gestor/9.Relatorio';
+import TelaLogin from './Telas/Login';
+import TelaAprendizInicio from './Telas/Aprendiz/Inicio';
+import TelaAprendizRegistroPonto from './Telas/Aprendiz/RegistroPonto';
+import TelaAprendizJustificativas from './Telas/Aprendiz/Justificativas';
+import TelaGestorDeshboard from './Telas/Gestor/Deshboard';
+import TelaGestorRegistrarPonto from './Telas/Gestor/RegistrarPonto';
+import TelaGestorJustificativas from './Telas/Gestor/Justificativas';
+import TelaGestorUsuario from './Telas/Gestor/Usuario';
+import TelaGestorRelatorio from './Telas/Gestor/Relatorio';
 // Criação do Stack Navigator
 const Stack = createStackNavigator();
 export default function App() {
