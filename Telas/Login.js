@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, TextInput, Button } from "react-native";
-import estilo from "./css";
+import estilo from "../css";
 export default function TelaLogin({ navigation }) {
   return (
     <View style={estilo.loginScreen}>
