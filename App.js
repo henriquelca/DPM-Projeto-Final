@@ -15,7 +15,7 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="AprendizRegistroPonto">
+      <Stack.Navigator initialRouteName="GestorUsuario">
         <Stack.Screen name="Login" component={TelaLogin} />
         <Stack.Screen name="AprendizInicio" component={TelaAprendizInicio} />
         <Stack.Screen
