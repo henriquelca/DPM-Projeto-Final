@@ -556,6 +556,97 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.lg,
   },
+  container: {
+backgroundColor: '#FFFFFF', // Pinta só o cabeçalho de branco
+    width: '100%', // Faz o bloco branco ir de uma ponta a outra da tela
+    paddingTop: 10, // Afasta do relógio do celular
+    paddingBottom: 8, // Dá um espaço embaixo do texto
+    paddingLeft: 10, // Afasta da borda esquerda
+    
+    // A linha divisória:
+    borderBottomWidth: 1,
+    borderBottomColor: '#DCEBE2',
+ },
+  negrito: {
+    color: 'black',
+    fontSize: 16,
+    fontWeight: 'bold'
+  },
+  cinza: {
+    color: 'gray',
+    fontSize: 10,
+    fontWeight: 'bold'
+  },
+  verde: {
+color: 'green',
+    fontSize: 16,
+    fontWeight: 'bold',
+    // Apague o textAlign: 'right'
+    paddingLeft: 20, // Empurra o texto para a direita para alinhar com o de cima
+    paddingTop: 10,
+  },
+    screen: {
+    flex: 1,
+    backgroundColor: '#EEF6F1'
+  },
+    preto: {
+    color: 'black',
+    fontSize: 26,
+    fontWeight: 'bold',
+    paddingLeft: 20,
+    paddingTop: 10
+  },
+    cinza1: {
+    color: 'gray',
+    fontSize: 14,
+        paddingLeft: 20, // Empurra o texto para a direita para alinhar com o de cima
+    paddingTop: -1,
+  },
+  card:{
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginTop: 20,
+    padding: 20,
+    elevation: 3
+  },
+      cinza2: {
+    color: 'gray',
+    fontSize: 12,
+        paddingLeft: 20, // Empurra o texto para a direita para alinhar com o de cima
+    paddingTop: -1,
+  },
+  botaoRegistrar: {
+    backgroundColor: '#23804F', // A cor verde principal do protótipo
+    borderRadius: 8,            // Cantos levemente arredondados
+    paddingVertical: 14,        // Altura interna do botão
+    alignItems: 'center',       // Centraliza o texto no meio horizontalmente
+    marginTop: 20,              // Afasta o botão do relógio que está em cima
+  },
+  textoBotao: {
+    color: '#FFFFFF',           // Texto branco para contrastar com o verde
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  //status//
+  rowBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  badgePresente: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DCEFE3', // Fundo verde claro
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  textoBadge: {
+    color: '#23804F',           // Texto verde escuro
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 4,              // Espaço entre o ícone e o texto
+  },
 });
 
 // Mapeia a situação para o par de estilos do badge
