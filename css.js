@@ -556,8 +556,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.lg,
   },
-
-  //vitor
+  /////////////vitor///////////////////////////
   container: {
 backgroundColor: '#FFFFFF', // Pinta só o cabeçalho de branco
     width: '100%', // Faz o bloco branco ir de uma ponta a outra da tela
@@ -729,6 +728,59 @@ color: 'green',
   textoPendente: {
     color: '#B45309',
     fontSize: 12,
+    fontWeight: 'bold',
+  },
+    // Estilos da Tabela de Histórico de Ponto
+  tabelaContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginTop: 20,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#DCEBE2',
+  },
+  tabelaHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#DCEBE2',
+    paddingBottom: 10,
+    marginBottom: 10,
+  },
+  tabelaHeaderTexto: {
+    fontWeight: 'bold',
+    color: '#163A2B',
+    fontSize: 12,
+    flex: 1,
+    textAlign: 'center',
+  },
+  tabelaLinha: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F7F4',
+  },
+  tabelaColuna: {
+    fontSize: 12,
+    color: '#5B7A6A',
+    flex: 1,
+    textAlign: 'center',
+  },
+  // Selo de Atraso (amarelo)
+  badgeAtraso: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    alignSelf: 'center',
+  },
+  textoAtraso: {
+    color: '#B45309',
+    fontSize: 10,
     fontWeight: 'bold',
   },
 });
