@@ -685,6 +685,50 @@ color: 'green',
     fontWeight: 'bold',
     fontSize: 14,
   },
+    // Cabeçalho interno do card (Título na esquerda, Botão na direita)
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  botaoVerTodas: {
+    borderWidth: 1,
+    borderColor: '#23804F',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  textoVerTodas: {
+    color: '#23804F',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  // Caixa do item de justificativa individual
+  itemJustificativa: {
+    borderWidth: 1,
+    borderColor: '#DCEBE2',
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F7FCF9',
+  },
+  // Selo de status Pendente (tons de amarelo/laranja suave)
+  badgePendente: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  textoPendente: {
+    color: '#B45309',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
 });
 
 // Mapeia a situação para o par de estilos do badge

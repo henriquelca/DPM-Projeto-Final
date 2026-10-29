@@ -33,7 +33,7 @@ export default function TelaAprendizInicio({ navigation }) {
 
   return (
 //cabeçalho
-<View style={styles.screen}>
+<ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: 40 }}>   
       <View style={styles.container}>
         
         <View>
@@ -84,14 +84,21 @@ export default function TelaAprendizInicio({ navigation }) {
                          <Text style={styles.cinza2}>Resumo do mês</Text>
                                      {/* linhas de cads*/}
                          <View style={styles.linhaDeCard}>
-                         <View style={styles.miniCard}>  <Text style={styles.numeroMiniCard}>X</Text> <Text style={styles.textoMiniCard}>Presenças</Text> </View>
 
-                         
-                         <View style={styles.miniCard}>  <Text style={styles.numeroMiniCard}>X</Text> <Text style={styles.textoMiniCard}>Faltas</Text> </View>
+                         <View style={styles.miniCard}>
+                          <Text style={styles.numeroMiniCard}>X</Text>
+                          <Text style={styles.textoMiniCard}>Presenças</Text> 
+                          </View>
+                          
+                          <View style={styles.miniCard}>
+                          <Text style={styles.numeroMiniCard}>X</Text>
+                          <Text style={styles.textoMiniCard}>Faltas</Text> 
+                          </View>
 
-
-                         <View style={styles.miniCard}>  <Text style={styles.numeroMiniCard}>X</Text> <Text style={styles.textoMiniCard}>atrasos</Text> </View>
-
+                         <View style={styles.miniCard}>
+                          <Text style={styles.numeroMiniCard}>X</Text>
+                          <Text style={styles.textoMiniCard}>atrasos</Text>
+                           </View>
 
                          </View>
     <TouchableOpacity style={styles.botaoHistorico} onPress={() => {alert('Navegar para o histórico completo!');}}>
@@ -99,6 +106,47 @@ export default function TelaAprendizInicio({ navigation }) {
     </TouchableOpacity>
               </View>
 
-    </View>
+<View style={styles.card}>
+          
+          {/* Cabeçalho do Card (Título na esquerda e Botão na direita) */}
+          <View style={styles.cardHeaderRow}>
+            <View>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#163A2B' }}>
+                Justificativas recentes
+              </Text>
+              <Text style={{ fontSize: 12, color: '#5B7A6A', marginTop: 2 }}>
+                Acompanhe o status dos seus envios.
+              </Text>
+            </View>
+
+            {/* Botão Ver Todas */}
+            <TouchableOpacity 
+              style={styles.botaoVerTodas}
+              onPress={() => alert('Abrir lista completa de justificativas')}
+            >
+              <Text style={styles.textoVerTodas}>Ver todas</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Item Individual de Justificativa */}
+          <View style={styles.itemJustificativa}>
+            <View>
+              <Text style={{ fontWeight: 'bold', color: '#163A2B', fontSize: 14 }}>
+                Atraso
+              </Text>
+              <Text style={{ fontSize: 12, color: '#5B7A6A', marginTop: 2 }}>
+                17/06/2025
+              </Text>
+            </View>
+
+            {/* Selo Pendente */}
+            <View style={styles.badgePendente}>
+              <Text style={styles.textoPendente}>Pendente</Text>
+            </View>
+          </View>
+
+        </View>
+
+</ScrollView> 
   );
 };
