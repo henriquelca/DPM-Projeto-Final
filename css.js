@@ -556,6 +556,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.lg,
   },
+
+  //vitor
   container: {
 backgroundColor: '#FFFFFF', // Pinta só o cabeçalho de branco
     width: '100%', // Faz o bloco branco ir de uma ponta a outra da tela
