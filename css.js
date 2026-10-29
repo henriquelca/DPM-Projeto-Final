@@ -647,6 +647,44 @@ color: 'green',
     fontWeight: 'bold',
     marginLeft: 4,              // Espaço entre o ícone e o texto
   },
+  linhaDeCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 15,
+  },
+  miniCard: {
+    flex: 1, // Faz com que os três dividam o espaço igualmente de forma automática
+    backgroundColor: '#F7FCF9', // Um verde bem clarinho de fundo
+    borderWidth: 1,
+    borderColor: '#DCEBE2',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginHorizontal: 4, // Dá um pequeno espaçamento entre eles
+  },
+  numeroMiniCard: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#163A2B',
+  },
+  textoMiniCard: {
+    fontSize: 12,
+    color: '#5B7A6A',
+    marginTop: 2,
+  },
+  botaoHistorico: {
+    borderWidth: 1,
+    borderColor: '#23804F',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 15,
+  },
+  textoBotaoHistorico: {
+    color: '#23804F',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
 });
 
 // Mapeia a situação para o par de estilos do badge

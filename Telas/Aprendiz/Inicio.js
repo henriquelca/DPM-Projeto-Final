@@ -47,7 +47,7 @@ export default function TelaAprendizInicio({ navigation }) {
             <Text style={styles.preto}>Bom dia,[nome]</Text>
             <Text style={styles.cinza1}>Registre e acompanhe aqui sua jornada</Text>
 
-                    {/* parte 3 card*/}
+                    {/* parte 3 card 1*/}
             <View style ={styles.card}>
 <View style={styles.rowBetween}>
             <Text style={styles.cinza2}>Horário atual</Text>
@@ -78,6 +78,27 @@ export default function TelaAprendizInicio({ navigation }) {
             <Text style={styles.textoBotao}>Registrar entrada</Text>
           </TouchableOpacity>
              </View>
+
+            {/* parte 4 card 2*/}
+             <View style={styles.card}>
+                         <Text style={styles.cinza2}>Resumo do mês</Text>
+                                     {/* linhas de cads*/}
+                         <View style={styles.linhaDeCard}>
+                         <View style={styles.miniCard}>  <Text style={styles.numeroMiniCard}>X</Text> <Text style={styles.textoMiniCard}>Presenças</Text> </View>
+
+                         
+                         <View style={styles.miniCard}>  <Text style={styles.numeroMiniCard}>X</Text> <Text style={styles.textoMiniCard}>Faltas</Text> </View>
+
+
+                         <View style={styles.miniCard}>  <Text style={styles.numeroMiniCard}>X</Text> <Text style={styles.textoMiniCard}>atrasos</Text> </View>
+
+
+                         </View>
+    <TouchableOpacity style={styles.botaoHistorico} onPress={() => {alert('Navegar para o histórico completo!');}}>
+    <Text style={styles.textoBotaoHistorico}>Ver histórico completo</Text>
+    </TouchableOpacity>
+              </View>
+
     </View>
   );
 };
