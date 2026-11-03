@@ -2,10 +2,10 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
-// Importa as telas apontando corretamente para a pasta Telas/Aprendiz/
-import TelaAprendizInicio from './Telas/Aprendiz/Inicio';
-import TelaAprendizRegistroPonto from './Telas/Aprendiz/RegistroPonto';
-import TelaAprendizJustificativas from './Telas/Aprendiz/Justificativas';
+// Importa as telas da mesma pasta (Telas/Aprendiz/)
+import TelaAprendizInicio from './Inicio';
+import TelaAprendizRegistroPonto from './RegistroPonto';
+import TelaAprendizJustificativas from './Justificativas';
 
 const Tab = createBottomTabNavigator();
 

@@ -3,7 +3,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 
 // Importações
 import TelaLogin from "./Telas/Login";
-import AprendizTabs from "./AprendizTabs";
+import AprendizTabs from "./Telas/Aprendiz/AprendizTabs";
 import TelaGestorDeshboard from "./Telas/Gestor/Deshboard";
 import TelaGestorRegistrarPonto from "./Telas/Gestor/RegistrarPonto";
 import TelaGestorJustificativas from "./Telas/Gestor/Justificativas";
