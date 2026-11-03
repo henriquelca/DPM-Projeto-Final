@@ -32,7 +32,10 @@ export default function TelaGestorUsuario({ route }) {
             <Text style={estilo.headerUserRole}>Gestor(a)</Text>
           </View>
           <View>
-            <Pressable style={estilo.buttonOutline}>
+            <Pressable
+              style={estilo.buttonOutline}
+              onPress={() => navigation.navigate("Login")}
+            >
               <Text style={estilo.buttonOutlineText}>Sair</Text>
             </Pressable>
           </View>

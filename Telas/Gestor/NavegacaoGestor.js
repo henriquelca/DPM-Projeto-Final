@@ -6,6 +6,10 @@ import { Ionicons } from "@react-native-vector-icons/ionicons";
 
 // Importe sua tela de usuários
 import TelaGestorUsuario from "./Usuario";
+import TelaGestorRegistrarPonto from "./RegistrarPonto";
+import TelaGestorDeshboard from "./Deshboard";
+import TelaGestorJustificativas from "./Justificativas";
+import TelaGestorRelatorio from "./Relatorio";
 
 const Tab = createBottomTabNavigator();
 
@@ -59,15 +63,15 @@ export default function NavegacaoGestor() {
         };
       }}
     >
-      <Tab.Screen name="Dashboard" component={TelaProvisoria} />
+      <Tab.Screen name="Dashboard" component={TelaGestorDeshboard} />
 
       <Tab.Screen
         name="RegistrosPonto"
-        component={TelaProvisoria}
+        component={TelaGestorRegistrarPonto}
         options={{ tabBarLabel: "Ponto" }}
       />
 
-      <Tab.Screen name="Justificativas" component={TelaProvisoria} />
+      <Tab.Screen name="Justificativas" component={TelaGestorJustificativas} />
 
       <Tab.Screen
         name="Usuarios"
@@ -77,7 +81,7 @@ export default function NavegacaoGestor() {
 
       <Tab.Screen
         name="RelatoriosIA"
-        component={TelaProvisoria}
+        component={TelaGestorRelatorio}
         options={{ tabBarLabel: "Relatórios IA" }}
       />
     </Tab.Navigator>
