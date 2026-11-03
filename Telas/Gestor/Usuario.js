@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, Pressable, ScrollView } from "react-native";
+import React, { useState } from "react";
+import { View, Text, Pressable, ScrollView, TextInput } from "react-native";
 import estilo from "../../css";
 export default function TelaGestorUsuario({ route }) {
   const usuarios = [
@@ -37,30 +37,6 @@ export default function TelaGestorUsuario({ route }) {
             </Pressable>
           </View>
         </View>
-      </View>
-      <View style={estilo.tabs}>
-        {[
-          "Dashboard",
-          "Registrar Ponto",
-          "Justificativas",
-          "Usuários",
-          "Relatório",
-        ].map((aba) => (
-          <Pressable
-            key={aba}
-            style={[estilo.tab, aba === "Usuários" && estilo.tabActive]}
-            onPress={() => console.log(aba)}
-          >
-            <Text
-              style={[
-                estilo.tabText,
-                aba === "Usuários" && estilo.tabTextActive,
-              ]}
-            >
-              {aba}
-            </Text>
-          </Pressable>
-        ))}
       </View>
       <ScrollView contentContainerStyle={estilo.content}>
         <View style={estilo.rowBetween}>

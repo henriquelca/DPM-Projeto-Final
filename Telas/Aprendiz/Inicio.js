@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';   //não usado
-import styles, { badgeStyle, colors } from '../../css'; 
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { Ionicons } from "@expo/vector-icons"; //não usado
+import styles, { badgeStyle, colors } from "../../css";
 
 export default function TelaAprendizInicio({ navigation }) {
   // Cria o estado que guarda a data e hora atual do dispositivo
@@ -16,137 +16,153 @@ export default function TelaAprendizInicio({ navigation }) {
   }, []);
 
   // Formata apenas as horas e minutos (ex: "19:03")
-  const horaFormatada = dataAtual.toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit'
+  const horaFormatada = dataAtual.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
   // Formata o dia da semana e o mês (ex: "quarta-feira, 28 de outubro")
-  const dataFormatada = dataAtual.toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long'
+  const dataFormatada = dataAtual.toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
   });
   ///////////////////////////////////
-// Cria o estado para controlar se o ponto foi registado (começa como falso)
+  // Cria o estado para controlar se o ponto foi registado (começa como falso)
   const [pontoRegistrado, setPontoRegistrado] = useState(false);
 
   return (
-//cabeçalho
-<ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: 40 }}>   
+    //cabeçalho
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={{ paddingBottom: 40 }}
+    >
       <View style={styles.container}>
-        
         <View>
           <Text style={styles.cinza}>ESCOLA CHRISTUS</Text>
           <Text style={styles.negrito}>Portal Frequencia</Text>
         </View>
       </View>
 
-        {/* parte 2 pre card*/}
-            <Text style={styles.verde}>Área do aprendiz</Text>
-            <Text style={styles.preto}>Bom dia,[nome]</Text>
-            <Text style={styles.cinza1}>Registre e acompanhe aqui sua jornada</Text>
+      {/* parte 2 pre card*/}
+      <Text style={styles.verde}>Área do aprendiz</Text>
+      <Text style={styles.preto}>Bom dia,[nome]</Text>
+      <Text style={styles.cinza1}>Registre e acompanhe aqui sua jornada</Text>
 
-                    {/* parte 3 card 1*/}
-            <View style ={styles.card}>
-<View style={styles.rowBetween}>
-            <Text style={styles.cinza2}>Horário atual</Text>
-            
-            {/* O selo SÓ APARECE se pontoRegistrado for true */}
-            {pontoRegistrado && (
-              <View style={styles.badgePresente}> 
-                <Ionicons name="checkmark-circle" size={14} color="#23804F" />
-                <Text style={styles.textoBadge}>Presente</Text>
-              </View>
-            )}
-          </View>
+      {/* parte 3 card 1*/}
+      <View style={styles.card}>
+        <View style={styles.rowBetween}>
+          <Text style={styles.cinza2}>Horário atual</Text>
 
-            <Text style={{fontSize:30,fontWeight: 'bold', color: '#163A2B'}}>{horaFormatada}</Text>
-            <Text style={{ fontSize: 14, color: '#5B7A6A', textTransform: 'capitalize' }}>{dataFormatada}</Text>
-
-                    {/* Botão*/}
-<TouchableOpacity 
-            style={styles.botaoRegistrar} 
-            onPress={() => {
-              // Muda o estado para verdadeiro, o que faz o selo aparecer magicamente!
-              setPontoRegistrado(true);
-              
-              // TODO: Futuramente, aqui enviarás os dados para o banco de dados
-              alert('Presença registada com sucesso!');
-            }}
-          >
-            <Text style={styles.textoBotao}>Registrar entrada</Text>
-          </TouchableOpacity>
-             </View>
-
-            {/* parte 4 card 2*/}
-             <View style={styles.card}>
-                         <Text style={styles.cinza2}>Resumo do mês</Text>
-                                     {/* linhas de cads*/}
-                         <View style={styles.linhaDeCard}>
-
-                         <View style={styles.miniCard}>
-                          <Text style={styles.numeroMiniCard}>X</Text>
-                          <Text style={styles.textoMiniCard}>Presenças</Text> 
-                          </View>
-                          
-                          <View style={styles.miniCard}>
-                          <Text style={styles.numeroMiniCard}>X</Text>
-                          <Text style={styles.textoMiniCard}>Faltas</Text> 
-                          </View>
-
-                         <View style={styles.miniCard}>
-                          <Text style={styles.numeroMiniCard}>X</Text>
-                          <Text style={styles.textoMiniCard}>atrasos</Text>
-                           </View>
-
-                         </View>
-    <TouchableOpacity style={styles.botaoHistorico} onPress={() => {alert('Navegar para o histórico completo!');}}>
-    <Text style={styles.textoBotaoHistorico}>Ver histórico completo</Text>
-    </TouchableOpacity>
-              </View>
-
-<View style={styles.card}>
-          
-          {/* Cabeçalho do Card (Título na esquerda e Botão na direita) */}
-          <View style={styles.cardHeaderRow}>
-            <View>
-              <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#163A2B' }}>
-                Justificativas recentes
-              </Text>
-              <Text style={{ fontSize: 12, color: '#5B7A6A', marginTop: 2 }}>
-                Acompanhe o status dos seus envios.
-              </Text>
+          {/* O selo SÓ APARECE se pontoRegistrado for true */}
+          {pontoRegistrado && (
+            <View style={styles.badgePresente}>
+              <Ionicons name="checkmark-circle" size={14} color="#23804F" />
+              <Text style={styles.textoBadge}>Presente</Text>
             </View>
-
-            {/* Botão Ver Todas */}
-            <TouchableOpacity 
-              style={styles.botaoVerTodas}
-              onPress={() => alert('Abrir lista completa de justificativas')}
-            >
-              <Text style={styles.textoVerTodas}>Ver todas</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Item Individual de Justificativa */}
-          <View style={styles.itemJustificativa}>
-            <View>
-              <Text style={{ fontWeight: 'bold', color: '#163A2B', fontSize: 14 }}>
-                Atraso
-              </Text>
-              <Text style={{ fontSize: 12, color: '#5B7A6A', marginTop: 2 }}>
-                17/06/2025
-              </Text>
-            </View>
-
-            {/* Selo Pendente */}
-            <View style={styles.badgePendente}>
-              <Text style={styles.textoPendente}>Pendente</Text>
-            </View>
-          </View>
-
+          )}
         </View>
 
-</ScrollView> 
+        <Text style={{ fontSize: 30, fontWeight: "bold", color: "#163A2B" }}>
+          {horaFormatada}
+        </Text>
+        <Text
+          style={{
+            fontSize: 14,
+            color: "#5B7A6A",
+            textTransform: "capitalize",
+          }}
+        >
+          {dataFormatada}
+        </Text>
+
+        {/* Botão*/}
+        <TouchableOpacity
+          style={styles.botaoRegistrar}
+          onPress={() => {
+            // Muda o estado para verdadeiro, o que faz o selo aparecer magicamente!
+            setPontoRegistrado(true);
+
+            // TODO: Futuramente, aqui enviarás os dados para o banco de dados
+            alert("Presença registada com sucesso!");
+          }}
+        >
+          <Text style={styles.textoBotao}>Registrar entrada</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* parte 4 card 2*/}
+      <View style={styles.card}>
+        <Text style={styles.cinza2}>Resumo do mês</Text>
+        {/* linhas de cads*/}
+        <View style={styles.linhaDeCard}>
+          <View style={styles.miniCard}>
+            <Text style={styles.numeroMiniCard}>X</Text>
+            <Text style={styles.textoMiniCard}>Presenças</Text>
+          </View>
+
+          <View style={styles.miniCard}>
+            <Text style={styles.numeroMiniCard}>X</Text>
+            <Text style={styles.textoMiniCard}>Faltas</Text>
+          </View>
+
+          <View style={styles.miniCard}>
+            <Text style={styles.numeroMiniCard}>X</Text>
+            <Text style={styles.textoMiniCard}>atrasos</Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          style={styles.botaoHistorico}
+          onPress={() => {
+            alert("Navegar para o histórico completo!");
+          }}
+        >
+          <Text style={styles.textoBotaoHistorico}>Ver histórico completo</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.card}>
+        {/* Cabeçalho do Card (Título na esquerda e Botão na direita) */}
+        <View style={styles.cardHeaderRow}>
+          <View>
+            <Text
+              style={{ fontSize: 16, fontWeight: "bold", color: "#163A2B" }}
+            >
+              Justificativas recentes
+            </Text>
+            <Text style={{ fontSize: 12, color: "#5B7A6A", marginTop: 2 }}>
+              Acompanhe o status dos seus envios.
+            </Text>
+          </View>
+
+          {/* Botão Ver Todas */}
+          <TouchableOpacity
+            style={styles.botaoVerTodas}
+            onPress={() => alert("Abrir lista completa de justificativas")}
+          >
+            <Text style={styles.textoVerTodas}>Ver todas</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Item Individual de Justificativa */}
+        <View style={styles.itemJustificativa}>
+          <View>
+            <Text
+              style={{ fontWeight: "bold", color: "#163A2B", fontSize: 14 }}
+            >
+              Atraso
+            </Text>
+            <Text style={{ fontSize: 12, color: "#5B7A6A", marginTop: 2 }}>
+              17/06/2025
+            </Text>
+          </View>
+
+          {/* Selo Pendente */}
+          <View style={styles.badgePendente}>
+            <Text style={styles.textoPendente}>Pendente</Text>
+          </View>
+        </View>
+      </View>
+    </ScrollView>
   );
-};
+}
