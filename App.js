@@ -17,7 +17,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="GestorUsuario"
+        initialRouteName="AprendizTabs"
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Login" component={TelaLogin} />
