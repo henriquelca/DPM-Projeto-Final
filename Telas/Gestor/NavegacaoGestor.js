@@ -13,21 +13,6 @@ import TelaGestorRelatorio from "./Relatorio";
 
 const Tab = createBottomTabNavigator();
 
-// Telas provisórias para as outras opções
-function TelaProvisoria({ route }) {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>{route.name}</Text>
-    </View>
-  );
-}
-
 export default function NavegacaoGestor() {
   return (
     <Tab.Navigator

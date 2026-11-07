@@ -1,24 +1,63 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, ScrollView, TextInput } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 import estilo from "../../css";
-export default function TelaGestorUsuario({ route }) {
-  const usuarios = [
-    {
-      nome: "João Silva",
-      matricula: "2025001",
-      email: "joao.silva@christus.edu.br",
-    },
-    {
-      nome: "Maria Santos",
-      matricula: "2025002",
-      email: "maria.santos@christus.edu.br",
-    },
-    {
-      nome: "Pedro Lima",
-      matricula: "2025003",
-      email: "pedro.lima@christus.edu.br",
-    },
-  ];
+export default function TelaGestorUsuario({ route, navigation }) {
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+
+  const [nome, setNome] = useState("");
+  const [matricula, setMatricula] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
+
+  const [mensagem, setMensagem] = useState("");
+  const [usuarios, setUsuarios] = useState([]);
+  const cadastrarUsuario = () => {
+    if (
+      !nome.trim() ||
+      !matricula.trim() ||
+      !email.trim() ||
+      !senha ||
+      !confirmarSenha
+    ) {
+      setMensagem("Preencha todos os campos.");
+      return;
+    }
+
+    if (senha.length < 6) {
+      setMensagem("A senha precisa ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      setMensagem("As senhas não são iguais.");
+      return;
+    }
+
+    setUsuarios([
+      ...usuarios,
+      {
+        nome,
+        matricula,
+        email,
+      },
+    ]);
+
+    setNome("");
+    setMatricula("");
+    setEmail("");
+    setSenha("");
+    setConfirmarSenha("");
+    setMensagem("");
+    setMostrarFormulario(false);
+  };
   return (
     <View style={estilo.screen}>
       <View style={estilo.header}>
@@ -32,12 +71,12 @@ export default function TelaGestorUsuario({ route }) {
             <Text style={estilo.headerUserRole}>Gestor(a)</Text>
           </View>
           <View>
-            <Pressable
+            <TouchableOpacity
               style={estilo.buttonOutline}
               onPress={() => navigation.navigate("Login")}
             >
               <Text style={estilo.buttonOutlineText}>Sair</Text>
-            </Pressable>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -50,12 +89,12 @@ export default function TelaGestorUsuario({ route }) {
               Crie o acesso dos aprendizes e consulte as contas já cadastradas.
             </Text>
           </View>
-          <Pressable
+          <TouchableOpacity
             style={estilo.buttonPrimary}
-            onPress={() => console.log("Adicionar Usuário")}
+            onPress={() => navigation.navigate("AdicionarUsuario")}
           >
             <Text style={estilo.buttonPrimaryText}>Adicionar Usuário</Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
         <View style={[estilo.card, { padding: 0 }]}>
           <View style={[estilo.cardHeader, { padding: 16, marginBottom: 0 }]}>
