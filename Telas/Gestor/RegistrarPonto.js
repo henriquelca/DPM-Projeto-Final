@@ -55,53 +55,6 @@ export default function TelaGestorRegistrarPonto({ route, navigation }) {
 
   return (
     <SafeAreaView style={estilo.screen}>
-      {/* Cabeçalho */}
-      <View style={estilo.header}>
-        <View>
-          <Text style={estilo.headerBrand}>ESCOLA CHRISTUS</Text>
-          <Text style={estilo.headerTitle}>Portal de frequência</Text>
-        </View>
-        <View style={estilo.row}>
-          <View style={estilo.headerUser}>
-            <Text style={estilo.headerUserName}>Mariana Souza</Text>
-            <Text style={estilo.headerUserRole}>Gestora</Text>
-          </View>
-          <TouchableOpacity
-            style={estilo.buttonOutline}
-            onPress={() => navigation.navigate("Login")}
-          >
-            <Text style={estilo.buttonOutlineText}>Sair</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Abas de Navegação */}
-      <View style={estilo.tabs}>
-        <TouchableOpacity
-          style={estilo.tab}
-          onPress={() => navigation.navigate("GestorDeshboard")}
-        >
-          <Text style={estilo.tabText}>Dashboard</Text>
-        </TouchableOpacity>
-
-        <View style={[estilo.tab, estilo.tabActive]}>
-          <Text style={estilo.tabTextActive}>Registros de ponto</Text>
-        </View>
-
-        <TouchableOpacity
-          style={estilo.tab}
-          onPress={() => navigation.navigate("GestorJustificativas")}
-        >
-          <Text style={estilo.tabText}>Justificativas</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={estilo.tab}
-          onPress={() => navigation.navigate("GestorUsuario")}
-        >
-          <Text style={estilo.tabText}>Usuários</Text>
-        </TouchableOpacity>
-      </View>
-
       <ScrollView contentContainerStyle={estilo.content}>
         <Text style={estilo.eyebrow}>ÁREA DA GESTÃO</Text>
         <Text style={estilo.pageTitle}>Registros de ponto</Text>

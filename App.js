@@ -17,10 +17,9 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Login"
+        initialRouteName="GestorJustificativas"
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="Login" component={TelaLogin} />
 
         {/* Agrupa todas as abas inferiores do aprendiz numa única rota */}
         <Stack.Screen name="AprendizTabs" component={AprendizTabs} />
