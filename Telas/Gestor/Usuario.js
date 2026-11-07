@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 
-import { View, Text, Pressable, ScrollView, TextInput } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  TextInput,
+  Modal,
+} from "react-native";
 
 import estilo from "../../css";
 
@@ -43,6 +50,10 @@ export default function TelaGestorUsuario({ navigation }) {
       status: "Ativo",
     },
   ]);
+
+  // Estados para controlar a exclusão
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+  const [etapaExclusao, setEtapaExclusao] = useState(0);
 
   // Cadastrar usuário
   const cadastrarUsuario = () => {
@@ -109,7 +120,7 @@ export default function TelaGestorUsuario({ navigation }) {
     // Adicionar usuário à lista
     setUsuarios((usuariosAtuais) => [...usuariosAtuais, novoUsuario]);
 
-    // Limpar os campos
+    // Limpar campos
     setNome("");
     setMatricula("");
     setEmail("");
@@ -121,6 +132,40 @@ export default function TelaGestorUsuario({ navigation }) {
 
     // Fechar formulário
     setMostrarFormulario(false);
+  };
+
+  // Abrir primeira confirmação
+  const confirmarExclusao = (usuario) => {
+    setSucesso("");
+    setUsuarioSelecionado(usuario);
+    setEtapaExclusao(1);
+  };
+
+  // Cancelar exclusão
+  const cancelarExclusao = () => {
+    setEtapaExclusao(0);
+    setUsuarioSelecionado(null);
+  };
+
+  // Passar para segunda confirmação
+  const continuarExclusao = () => {
+    setEtapaExclusao(2);
+  };
+
+  // Excluir usuário definitivamente da lista
+  const excluirUsuario = () => {
+    if (!usuarioSelecionado) return;
+
+    const nomeExcluido = usuarioSelecionado.nome;
+
+    setUsuarios((usuariosAtuais) =>
+      usuariosAtuais.filter((usuario) => usuario.id !== usuarioSelecionado.id),
+    );
+
+    setEtapaExclusao(0);
+    setUsuarioSelecionado(null);
+
+    setSucesso(`${nomeExcluido} foi excluído com sucesso.`);
   };
 
   // Sair da conta
@@ -190,7 +235,14 @@ export default function TelaGestorUsuario({ navigation }) {
 
         {/* MENSAGEM DE SUCESSO */}
         {sucesso !== "" && (
-          <Text style={{ color: "#23804F", marginBottom: 16 }}>{sucesso}</Text>
+          <Text
+            style={{
+              color: "#23804F",
+              marginBottom: 16,
+            }}
+          >
+            {sucesso}
+          </Text>
         )}
 
         {/* DOIS PAINÉIS */}
@@ -377,7 +429,12 @@ export default function TelaGestorUsuario({ navigation }) {
                   <View
                     style={[estilo.rowBetween, { alignItems: "flex-start" }]}
                   >
-                    <View style={{ flex: 1, paddingRight: 12 }}>
+                    <View
+                      style={{
+                        flex: 1,
+                        paddingRight: 12,
+                      }}
+                    >
                       <Text style={[estilo.text, { fontWeight: "800" }]}>
                         {usuario.nome}
                       </Text>
@@ -389,10 +446,28 @@ export default function TelaGestorUsuario({ navigation }) {
                       <Text style={estilo.textMuted}>{usuario.email}</Text>
                     </View>
 
-                    <View style={[estilo.badge, estilo.badgeSuccess]}>
-                      <Text style={[estilo.badgeText, estilo.badgeSuccessText]}>
-                        {usuario.status}
-                      </Text>
+                    {/* STATUS E EXCLUIR */}
+                    <View
+                      style={{
+                        alignItems: "flex-end",
+                        gap: 8,
+                      }}
+                    >
+                      <View style={[estilo.badge, estilo.badgeSuccess]}>
+                        <Text
+                          style={[estilo.badgeText, estilo.badgeSuccessText]}
+                        >
+                          {usuario.status}
+                        </Text>
+                      </View>
+
+                      {/* BOTÃO EXCLUIR */}
+                      <Pressable
+                        style={[estilo.buttonDanger, estilo.buttonSmall]}
+                        onPress={() => confirmarExclusao(usuario)}
+                      >
+                        <Text style={estilo.buttonDangerText}>Excluir</Text>
+                      </Pressable>
                     </View>
                   </View>
                 </View>
@@ -401,6 +476,84 @@ export default function TelaGestorUsuario({ navigation }) {
           </View>
         </View>
       </ScrollView>
+
+      {/* MODAL DE CONFIRMAÇÃO EM DUAS ETAPAS */}
+      <Modal
+        transparent
+        visible={etapaExclusao > 0}
+        animationType="fade"
+        onRequestClose={cancelarExclusao}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.45)",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 24,
+          }}
+        >
+          <View
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              backgroundColor: "#FFFFFF",
+              borderWidth: 1,
+              borderColor: "#2E8B57",
+              padding: 24,
+            }}
+          >
+            <Text style={estilo.sectionTitle}>
+              {etapaExclusao === 1 ? "Excluir usuário?" : "Confirmação final"}
+            </Text>
+
+            <Text
+              style={[
+                estilo.text,
+                {
+                  marginTop: 12,
+                  marginBottom: 20,
+                },
+              ]}
+            >
+              {etapaExclusao === 1
+                ? `Deseja excluir o usuário ${usuarioSelecionado?.nome}?`
+                : `Tem certeza que deseja excluir ${usuarioSelecionado?.nome}? Essa ação não poderá ser desfeita.`}
+            </Text>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                flexWrap: "wrap",
+                gap: 10,
+              }}
+            >
+              {/* CANCELAR */}
+              <Pressable
+                style={estilo.buttonOutline}
+                onPress={cancelarExclusao}
+              >
+                <Text style={estilo.buttonOutlineText}>
+                  {etapaExclusao === 1 ? "Cancelar" : "Não excluir"}
+                </Text>
+              </Pressable>
+
+              {/* CONTINUAR OU EXCLUIR */}
+              <Pressable
+                style={estilo.buttonDanger}
+                onPress={
+                  etapaExclusao === 1 ? continuarExclusao : excluirUsuario
+                }
+              >
+                <Text style={estilo.buttonDangerText}>
+                  {etapaExclusao === 1 ? "Continuar" : "Sim, excluir"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
