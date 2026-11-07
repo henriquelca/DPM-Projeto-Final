@@ -26,11 +26,17 @@ export default function App() {
         <Stack.Screen name="AprendizTabs" component={AprendizTabs} />
 
         {/* Telas do Gestor */}
-        <Stack.Screen name="GestorDeshboard" component={NavegacaoGestor} />
-        <Stack.Screen name="GestorRegistrarPonto" component={NavegacaoGestor} />
-        <Stack.Screen name="GestorJustificativas" component={NavegacaoGestor} />
-        <Stack.Screen name="GestorUsuario" component={NavegacaoGestor} />
-        <Stack.Screen name="GestorRelatorio" component={NavegacaoGestor} />
+        <Stack.Screen name="TelaGestorDeshboard" component={NavegacaoGestor} />
+        <Stack.Screen
+          name="TelaGestorRegistrarPonto"
+          component={NavegacaoGestor}
+        />
+        <Stack.Screen
+          name="TelaGestorJustificativas"
+          component={NavegacaoGestor}
+        />
+        <Stack.Screen name="TelaGestorUsuario" component={NavegacaoGestor} />
+        <Stack.Screen name="TelaGestorRelatorio" component={NavegacaoGestor} />
       </Stack.Navigator>
     </NavigationContainer>
   );

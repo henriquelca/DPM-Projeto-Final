@@ -15,7 +15,7 @@ export default function TelaLogin({ navigation }) {
     if (tipo === "Aprendiz") {
       navigation.navigate("AprendizTabs");
     } else {
-      navigation.navigate("GestorDashboard");
+      navigation.navigate("TelaGestorDeshboard");
     }
   };
   return (
