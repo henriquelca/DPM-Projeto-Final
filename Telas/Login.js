@@ -11,6 +11,13 @@ import {
 import estilo from "../css";
 export default function TelaLogin({ navigation }) {
   const [tipo, setTipo] = useState("Aprendiz");
+  const entrarNoPortal = () => {
+    if (tipo === "Aprendiz") {
+      navigation.navigate("AprendizTabs");
+    } else {
+      navigation.navigate("GestorDashboard");
+    }
+  };
   return (
     <View style={estilo.loginScreen}>
       <View style={estilo.cardElevated}>
@@ -69,11 +76,8 @@ export default function TelaLogin({ navigation }) {
           ></TextInput>
         </View>
         <View>
-          <Pressable
-            style={estilo.buttonPrimary}
-            onPress={() => navigation.navigate("AprendizInicio")}
-          >
-            <Text style={estilo.buttonPrimaryText}>Entrar no portal</Text>
+          <Pressable style={estilo.buttonPrimary} onPress={entrarNoPortal}>
+            <Text style={estilo.buttonPrimaryText}>Entrar</Text>
           </Pressable>
         </View>
       </View>
