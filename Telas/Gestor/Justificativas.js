@@ -1,148 +1,99 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  SafeAreaView,
-  ScrollView,
-} from "react-native";
-import estilo, { badgeStyle } from "../../css";
+import React from 'react';
+import { View, Text, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import styles from './css'; // Importa o ficheiro de estilos
 
-export default function TelaGestorJustificativas() {
-  // O useState é fundamental para que o React saiba que o texto deve mudar na tela
-  const [filtroAtual, setFiltroAtual] = useState("Todas");
-  const [menuAberto, setMenuAberto] = useState(false);
-  
-  const botoesFiltro = ["Todas", "Pendente", "Aprovado", "Rejeitado"];
-
-  const justificativas = [
-    {
-      id: 1,
-      nome: "João Silva",
-      status: "Pendente",
-      tipo: "Atraso",
-      data: "17/06/2025",
-      motivo: "O ônibus ficou paralisado devido a um acidente na avenida.",
-    },
-    {
-      id: 2,
-      nome: "Maria Santos",
-      status: "Rejeitado",
-      tipo: "Falta",
-      data: "12/06/2025",
-      motivo: "Consulta médica agendada.",
-    },
-  ];
-
-  const justificativasFiltradas = justificativas.filter((item) => {
-    if (filtroAtual === "Todas") return true;
-    return item.status === filtroAtual;
-  });
-
+export default function AnaliseJustificativasScreen() {
   return (
-    <SafeAreaView style={estilo.screen}>
-      <ScrollView contentContainerStyle={estilo.content}>
-        <Text style={estilo.eyebrow}>ÁREA DA GESTÃO</Text>
-        <Text style={estilo.pageTitle}>Análise de justificativas</Text>
-        <Text style={estilo.pageSubtitle}>
-          Analisar os motivos enviados e atualizar o status de cada solicitação
+    <SafeAreaView style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.content}>
+        
+        {/* Cabeçalho da Página */}
+        <Text style={styles.eyebrow}>ÁREA DA GESTÃO</Text>
+        <Text style={styles.pageTitle}>Análise de justificativas</Text>
+        <Text style={styles.pageSubtitle}>
+          Analise os motivos enviados e atualize o status de cada solicitação.
         </Text>
 
-        {/* Menu Dropdown */}
-        <View style={{ marginBottom: 24 }}>
-          <TouchableOpacity
-            style={{
-              borderWidth: 1,
-              borderColor: '#2E8B57',
-              backgroundColor: '#FFFFFF',
-              padding: 14,
-              borderRadius: menuAberto ? 0 : 8,
-              borderTopLeftRadius: 8,
-              borderTopRightRadius: 8,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-            onPress={() => setMenuAberto(!menuAberto)}
-          >
-            <Text style={{ color: '#23804F', fontWeight: 'bold', fontSize: 14 }}>
-              Filtro Atual: {filtroAtual}
-            </Text>
-            <Text style={{ color: '#23804F', fontWeight: 'bold', fontSize: 12 }}>
-              {menuAberto ? "▲" : "▼"}
-            </Text>
+        {/* Filtros */}
+        <View style={styles.filters}>
+          <TouchableOpacity style={[styles.filter, styles.filterActive]}>
+            <Text style={[styles.filterText, styles.filterTextActive]}>Todas</Text>
           </TouchableOpacity>
-
-          {menuAberto && (
-            <View style={{
-              borderWidth: 1,
-              borderTopWidth: 0,
-              borderColor: '#2E8B57',
-              backgroundColor: '#FFFFFF',
-              borderBottomLeftRadius: 8,
-              borderBottomRightRadius: 8,
-            }}>
-              {botoesFiltro.map((nomeFiltro, index) => (
-                <TouchableOpacity
-                  key={nomeFiltro}
-                  style={{
-                    padding: 14,
-                    borderBottomWidth: index === botoesFiltro.length - 1 ? 0 : 1, 
-                    borderBottomColor: '#DCEBE2',
-                    backgroundColor: filtroAtual === nomeFiltro ? '#DCEFE3' : '#FFFFFF'
-                  }}
-                  onPress={() => {
-                    setFiltroAtual(nomeFiltro); // Atualiza o estado
-                    setMenuAberto(false);       // Fecha o menu
-                  }}
-                >
-                  <Text style={{
-                    color: filtroAtual === nomeFiltro ? '#1A6B41' : '#163A2B',
-                    fontWeight: filtroAtual === nomeFiltro ? 'bold' : 'normal'
-                  }}>
-                    {nomeFiltro}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+          <TouchableOpacity style={styles.filter}>
+            <Text style={styles.filterText}>Pendente</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.filter}>
+            <Text style={styles.filterText}>Aprovado</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.filter}>
+            <Text style={styles.filterText}>Rejeitado</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Lista de Justificativas */}
-        {justificativasFiltradas.map((item) => {
-          const [bgStyle, textStyle] = badgeStyle(item.status);
-
-          return (
-            <View key={item.id} style={estilo.card}>
-              <View style={estilo.cardHeaderRow}>
-                <View style={estilo.row}>
-                  <Text style={[estilo.text, { fontWeight: "bold", fontSize: 16, marginRight: 8 }]}>
-                    {item.nome}
-                  </Text>
-                  <View style={[estilo.badge, bgStyle]}>
-                    <Text style={[estilo.badgeText, textStyle]}>
-                      {item.status}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={estilo.buttonGroup}>
-                  <TouchableOpacity style={[estilo.buttonOutline, estilo.buttonSmall]}>
-                    <Text style={estilo.buttonOutlineText}>Aprovar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[estilo.buttonDanger, estilo.buttonSmall]}>
-                    <Text style={estilo.buttonDangerText}>Rejeitar</Text>
-                  </TouchableOpacity>
+        {/* Card 1: João Silva (Pendente) */}
+        <View style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            {/* Informações da Esquerda */}
+            <View>
+              <View style={[styles.row, { marginBottom: 4 }]}>
+                <Text style={[styles.sectionTitle, { marginRight: 8 }]}>João Silva</Text>
+                {/* Utilizando o badge específico de Pendente que criou */}
+                <View style={styles.badgePendente}>
+                  <Text style={styles.textoPendente}>Pendente</Text>
                 </View>
               </View>
-
-              <Text style={[estilo.textMuted, { marginBottom: 8 }]}>
-                {item.tipo} - {item.data}
-              </Text>
-              <Text style={estilo.text}>{item.motivo}</Text>
+              <Text style={styles.textMuted}>Atraso · 17/06/2025</Text>
             </View>
-          );
-        })}
+
+            {/* Botões de Ação na Direita */}
+            <View style={styles.buttonGroup}>
+              <TouchableOpacity style={[styles.buttonOutline, styles.buttonSmall]}>
+                <Text style={styles.buttonOutlineText}>Aprovar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.buttonDanger, styles.buttonSmall]}>
+                <Text style={styles.buttonDangerText}>Rejeitar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Descrição */}
+          <Text style={[styles.text, { marginTop: 8 }]}>
+            O ônibus atrasou devido a um acidente na avenida.
+          </Text>
+        </View>
+
+        {/* Card 2: Maria Santos (Aprovado) */}
+        <View style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            {/* Informações da Esquerda */}
+            <View>
+              <View style={[styles.row, { marginBottom: 4 }]}>
+                <Text style={[styles.sectionTitle, { marginRight: 8 }]}>Maria Santos</Text>
+                {/* Utilizando as classes de badge padrão para Aprovado */}
+                <View style={[styles.badge, styles.badgeSuccess, { borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }]}>
+                  <Text style={[styles.badgeText, styles.badgeSuccessText]}>Aprovado</Text>
+                </View>
+              </View>
+              <Text style={styles.textMuted}>Falta · 12/06/2025</Text>
+            </View>
+
+            {/* Botões de Ação na Direita */}
+            <View style={styles.buttonGroup}>
+              <TouchableOpacity style={[styles.buttonOutline, styles.buttonSmall]}>
+                <Text style={styles.buttonOutlineText}>Aprovar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.buttonDanger, styles.buttonSmall]}>
+                <Text style={styles.buttonDangerText}>Rejeitar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Descrição */}
+          <Text style={[styles.text, { marginTop: 8 }]}>
+            Consulta médica agendada.
+          </Text>
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
