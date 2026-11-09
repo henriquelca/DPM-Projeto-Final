@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
-import styles from './css'; // Importa o ficheiro de estilos
+import styles from '../../css'; // Importa o ficheiro de estilos
 
 export default function AnaliseJustificativasScreen() {
   return (

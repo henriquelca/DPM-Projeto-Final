@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
-import styles from './css'; // Importa o arquivo css.js
+import styles from '../../css'; // Importa o arquivo css.js
 
 export default function TelaAprendizJustificativas() {
   return (
