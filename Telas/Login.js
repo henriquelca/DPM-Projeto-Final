@@ -9,13 +9,19 @@ import {
   Pressable,
 } from "react-native";
 import estilo from "../css";
+import { useAuth, mensagemDeErro } from "../AuthContext";
 export default function TelaLogin({ navigation }) {
   const [tipo, setTipo] = useState("Aprendiz");
-  const entrarNoPortal = () => {
-    if (tipo === "Aprendiz") {
-      navigation.navigate("AprendizTabs");
-    } else {
-      navigation.navigate("TelaGestorDeshboard");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [erro, setErro] = useState("");
+  const { entrar } = useAuth();
+  const entrarNoPortal = async () => {
+    setErro("");
+    try {
+      await entrar(email, senha, tipo);
+    } catch (e) {
+      setErro(mensagemDeErro(e));
     }
   };
   return (
@@ -62,19 +68,26 @@ export default function TelaLogin({ navigation }) {
           </Pressable>
         </View>
         <View>
-          <Text style={estilo.sectionTitle}>Matrícula:</Text>
+          <Text style={estilo.sectionTitle}>E-mail:</Text>
           <TextInput
             style={estilo.card}
-            placeholder="Digite sua matrícula"
+            placeholder="Digite seu e-mail"
             placeholderTextColor="green"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
           ></TextInput>
           <Text style={estilo.sectionTitle}>Senha:</Text>
           <TextInput
             style={estilo.card}
             placeholder="Digite sua senha"
             placeholderTextColor="green"
+            value={senha}
+            onChangeText={setSenha}
+            secureTextEntry
           ></TextInput>
         </View>
+        <Text style={{ color: "red" }}>{erro}</Text>
         <View>
           <Pressable style={estilo.buttonPrimary} onPress={entrarNoPortal}>
             <Text style={estilo.buttonPrimaryText}>Entrar</Text>

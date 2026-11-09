@@ -1,42 +1,55 @@
+import { ActivityIndicator, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
 // Importações
+import { AuthProvider, useAuth } from "./AuthContext";
 import TelaLogin from "./Telas/Login";
 import AprendizTabs from "./Telas/Aprendiz/AprendizTabs";
-import TelaGestorDeshboard from "./Telas/Gestor/Deshboard";
-import TelaGestorRegistrarPonto from "./Telas/Gestor/RegistrarPonto";
-import TelaGestorJustificativas from "./Telas/Gestor/Justificativas";
-import TelaGestorUsuario from "./Telas/Gestor/Usuario";
-import TelaGestorRelatorio from "./Telas/Gestor/Relatorio";
 import NavegacaoGestor from "./Telas/Gestor/NavegacaoGestor";
 
 const Stack = createStackNavigator();
 
+function Rotas() {
+  const { perfil, carregando } = useAuth();
+
+  if (carregando) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#23804F" />
+      </View>
+    );
+  }
+
+  if (perfil === null) {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Login" component={TelaLogin} />
+      </Stack.Navigator>
+    );
+  }
+
+  if (perfil.tipo === "gestor") {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Gestor" component={NavegacaoGestor} />
+      </Stack.Navigator>
+    );
+  }
+
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="AprendizTabs" component={AprendizTabs} />
+    </Stack.Navigator>
+  );
+}
+
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="GestorJustificativas"
-        screenOptions={{ headerShown: false }}
-      >
-
-        {/* Agrupa todas as abas inferiores do aprendiz numa única rota */}
-        <Stack.Screen name="AprendizTabs" component={AprendizTabs} />
-
-        {/* Telas do Gestor */}
-        <Stack.Screen name="TelaGestorDeshboard" component={NavegacaoGestor} />
-        <Stack.Screen
-          name="TelaGestorRegistrarPonto"
-          component={NavegacaoGestor}
-        />
-        <Stack.Screen
-          name="TelaGestorJustificativas"
-          component={NavegacaoGestor}
-        />
-        <Stack.Screen name="TelaGestorUsuario" component={NavegacaoGestor} />
-        <Stack.Screen name="TelaGestorRelatorio" component={NavegacaoGestor} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <AuthProvider>
+      <NavigationContainer>
+        <Rotas />
+      </NavigationContainer>
+    </AuthProvider>
   );
 }
