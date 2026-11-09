@@ -1,12 +1,15 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
-import styles from './css';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import styles from '../../css';
+import { useAuth } from '../../AuthContext';
 
 export default function TelaPerfilGestor() {
+  const { perfil, sair } = useAuth();
+
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        
         {/* Título da Tela */}
         <Text style={styles.eyebrow}>ÁREA DA GESTÃO</Text>
         <Text style={styles.pageTitle}>Perfil da Gestão</Text>
@@ -15,31 +18,30 @@ export default function TelaPerfilGestor() {
         {/* Card de Informações do Usuário */}
         <View style={styles.card}>
           <View style={styles.listItem}>
-            <Text style={styles.label}>Nome Completo</Text>
-            <Text style={styles.text}>Ana Sousa</Text>
+            <Text style={styles.label}>Nome completo</Text>
+            <Text style={styles.text}>{perfil.nome}</Text>
           </View>
 
           <View style={styles.listItem}>
-            <Text style={styles.label}>Nível de Acesso</Text>
-            <Text style={styles.text}>Coordenadora / Gestora</Text>
+            <Text style={styles.label}>Nível de acesso</Text>
+            <Text style={styles.text}>Gestor(a)</Text>
           </View>
 
           <View style={styles.listItem}>
-            <Text style={styles.label}>E-mail Institucional</Text>
-            <Text style={styles.text}>ana.sousa@escolachristus.com</Text>
+            <Text style={styles.label}>Matrícula</Text>
+            <Text style={styles.text}>{perfil.matricula}</Text>
           </View>
 
           <View style={[styles.listItem, styles.listItemLast]}>
-            <Text style={styles.label}>Setor Responsável</Text>
-            <Text style={styles.text}>Recursos Humanos / Gestão de Ponto</Text>
+            <Text style={styles.label}>E-mail</Text>
+            <Text style={styles.text}>{perfil.email}</Text>
           </View>
         </View>
 
         {/* Botão de Sair */}
-        <TouchableOpacity style={[styles.buttonDanger, { marginTop: 16 }]}>
-          <Text style={styles.buttonDangerText}>Encerrar Sessão</Text>
+        <TouchableOpacity style={[styles.buttonDanger, { marginTop: 16 }]} onPress={sair}>
+          <Text style={styles.buttonDangerText}>Sair da conta</Text>
         </TouchableOpacity>
-
       </ScrollView>
     </SafeAreaView>
   );

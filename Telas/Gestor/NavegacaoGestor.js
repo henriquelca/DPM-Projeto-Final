@@ -10,13 +10,14 @@ import TelaGestorRegistrarPonto from "./RegistrarPonto";
 import TelaGestorDeshboard from "./Deshboard";
 import TelaGestorJustificativas from "./Justificativas";
 import TelaGestorRelatorio from "./Relatorio";
+import TelaGestorPerfil from "./Perfil";
 
 const Tab = createBottomTabNavigator();
 
 export default function NavegacaoGestor() {
   return (
     <Tab.Navigator
-      initialRouteName="Usuarios"
+      initialRouteName="Dashboard"
       screenOptions={({ route }) => {
         const icones = {
           Dashboard: "home-outline",
@@ -24,6 +25,7 @@ export default function NavegacaoGestor() {
           Justificativas: "document-text-outline",
           Usuarios: "people-outline",
           RelatoriosIA: "bar-chart-outline",
+          Perfil: "person-circle-outline",
         };
 
         return {
@@ -69,6 +71,8 @@ export default function NavegacaoGestor() {
         component={TelaGestorRelatorio}
         options={{ tabBarLabel: "Relatórios IA" }}
       />
+
+      <Tab.Screen name="Perfil" component={TelaGestorPerfil} />
     </Tab.Navigator>
   );
 }

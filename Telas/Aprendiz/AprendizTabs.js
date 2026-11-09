@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import TelaAprendizInicio from './Inicio';
 import TelaAprendizRegistroPonto from './RegistroPonto';
 import TelaAprendizJustificativas from './Justificativas';
+import TelaAprendizPerfil from './Perfil';
 
 const Tab = createBottomTabNavigator();
 
@@ -32,6 +33,8 @@ export default function AprendizTabs() {
             iconName = focused ? 'time' : 'time-outline';
           } else if (route.name === 'Justificativas') {
             iconName = focused ? 'document-text' : 'document-text-outline';
+          } else if (route.name === 'Perfil') {
+            iconName = focused ? 'person-circle' : 'person-circle-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -41,6 +44,7 @@ export default function AprendizTabs() {
       <Tab.Screen name="Início" component={TelaAprendizInicio} />
       <Tab.Screen name="Registro de Ponto" component={TelaAprendizRegistroPonto} />
       <Tab.Screen name="Justificativas" component={TelaAprendizJustificativas} />
+      <Tab.Screen name="Perfil" component={TelaAprendizPerfil} />
     </Tab.Navigator>
   );
 }

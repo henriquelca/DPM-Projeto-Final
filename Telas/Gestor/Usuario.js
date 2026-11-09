@@ -10,6 +10,7 @@ import {
 } from "react-native";
 
 import estilo from "../../css";
+import { useAuth } from "../../AuthContext";
 
 export default function TelaGestorUsuario({ navigation }) {
   // Controlar a exibição do formulário
@@ -168,16 +169,7 @@ export default function TelaGestorUsuario({ navigation }) {
     setSucesso(`${nomeExcluido} foi excluído com sucesso.`);
   };
 
-  // Sair da conta
-  const sair = () => {
-    const navegadorPai = navigation.getParent();
-
-    if (navegadorPai) {
-      navegadorPai.navigate("Login");
-    } else {
-      navigation.navigate("Login");
-    }
-  };
+  const { perfil } = useAuth();
 
   // Contar usuários ativos
   const contasAtivas = usuarios.filter(
@@ -194,16 +186,10 @@ export default function TelaGestorUsuario({ navigation }) {
           <Text style={estilo.headerTitle}>Portal de Frequência</Text>
         </View>
 
-        <View style={estilo.row}>
-          <View style={estilo.headerUser}>
-            <Text style={estilo.headerUserName}>Mariana Souza</Text>
+        <View style={estilo.headerUser}>
+          <Text style={estilo.headerUserName}>{perfil?.nome}</Text>
 
-            <Text style={estilo.headerUserRole}>Gestor(a)</Text>
-          </View>
-
-          <Pressable style={estilo.buttonOutline} onPress={sair}>
-            <Text style={estilo.buttonOutlineText}>Sair</Text>
-          </Pressable>
+          <Text style={estilo.headerUserRole}>Gestor(a)</Text>
         </View>
       </View>
 
