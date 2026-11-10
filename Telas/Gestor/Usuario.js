@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,57 +6,100 @@ import {
   ScrollView,
   TextInput,
   Modal,
+  ActivityIndicator,
 } from "react-native";
 
 import estilo from "../../css";
 import { useAuth } from "../../AuthContext";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  getDocs,
+  doc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import {
+  createUserWithEmailAndPassword,
+  deleteUser,
+  signOut,
+} from "firebase/auth";
+import { db, cadastroAuth } from "../../firebaseConfig";
 
 export default function TelaGestorUsuario({ navigation }) {
-  // Controlar a exibição do formulário
+  const { perfil, sair: sairSessao } = useAuth();
+
+  // Controle do formulário
   const [mostrarFormulario, setMostrarFormulario] = useState(true);
 
-  // Dados do formulário
+  // Campos do formulário
   const [nome, setNome] = useState("");
   const [matricula, setMatricula] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
 
+  // Dados e estados da lista
+  const [usuarios, setUsuarios] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erroLista, setErroLista] = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
+
   // Mensagens
   const [mensagem, setMensagem] = useState("");
   const [sucesso, setSucesso] = useState("");
 
-  // Lista inicial de usuários
-  const [usuarios, setUsuarios] = useState([
-    {
-      id: "1",
-      nome: "João Silva",
-      matricula: "2025001",
-      email: "joao.silva@christus.edu.br",
-      status: "Ativo",
-    },
-    {
-      id: "2",
-      nome: "Maria Santos",
-      matricula: "2025002",
-      email: "maria.santos@christus.edu.br",
-      status: "Ativo",
-    },
-    {
-      id: "3",
-      nome: "Pedro Lima",
-      matricula: "2025003",
-      email: "pedro.lima@christus.edu.br",
-      status: "Ativo",
-    },
-  ]);
-
-  // Estados para controlar a exclusão
+  // Controle da confirmação em duas etapas
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
   const [etapaExclusao, setEtapaExclusao] = useState(0);
 
-  // Cadastrar usuário
-  const cadastrarUsuario = () => {
+  // BUSCAR APRENDIZES NO FIRESTORE EM TEMPO REAL
+  useEffect(() => {
+    const consultaAprendizes = query(
+      collection(db, "usuarios"),
+      where("tipo", "==", "aprendiz"),
+    );
+
+    const cancelarInscricao = onSnapshot(
+      consultaAprendizes,
+      (resultado) => {
+        const lista = resultado.docs
+          .map((documento) => {
+            const dados = documento.data();
+            return {
+              id: documento.id,
+              nome: dados.nome || "Nome não informado",
+              matricula: dados.matricula || "Não informada",
+              email: dados.email || "E-mail não informado",
+              status: dados.status || "Ativo",
+            };
+          })
+          // Contas inativas não aparecem na lista de ativos.
+          .filter((usuario) => usuario.status !== "Inativo")
+          .sort((a, b) => a.nome.localeCompare(b.nome));
+
+        setUsuarios(lista);
+        setErroLista("");
+        setCarregando(false);
+      },
+      (erro) => {
+        console.log("Erro ao buscar aprendizes no Firestore:", erro);
+        setErroLista(
+          "Não foi possível carregar os usuários. Verifique sua conexão e as permissões do Firestore.",
+        );
+        setCarregando(false);
+      },
+    );
+
+    return cancelarInscricao;
+  }, []);
+
+  // CADASTRAR APRENDIZ NO FIREBASE AUTHENTICATION E NO FIRESTORE
+  const cadastrarUsuario = async () => {
     const nomeLimpo = nome.trim();
     const matriculaLimpa = matricula.trim();
     const emailLimpo = email.trim().toLowerCase();
@@ -65,7 +107,6 @@ export default function TelaGestorUsuario({ navigation }) {
     setMensagem("");
     setSucesso("");
 
-    // Verificar campos vazios
     if (
       !nomeLimpo ||
       !matriculaLimpa ||
@@ -77,101 +118,145 @@ export default function TelaGestorUsuario({ navigation }) {
       return;
     }
 
-    // Validar e-mail
     const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
     if (!emailValido.test(emailLimpo)) {
       setMensagem("Digite um e-mail válido.");
       return;
     }
 
-    // Verificar tamanho da senha
     if (senha.length < 6) {
       setMensagem("A senha precisa ter pelo menos 6 caracteres.");
       return;
     }
 
-    // Confirmar senha
     if (senha !== confirmarSenha) {
       setMensagem("As senhas não são iguais.");
       return;
     }
 
-    // Verificar matrícula e e-mail duplicados
-    const usuarioExiste = usuarios.some(
-      (usuario) =>
-        usuario.matricula === matriculaLimpa ||
-        usuario.email.toLowerCase() === emailLimpo,
-    );
+    let usuarioAuthCriado = null;
 
-    if (usuarioExiste) {
-      setMensagem("Matrícula ou e-mail já cadastrado.");
-      return;
+    try {
+      setSalvando(true);
+
+      // Evita matrículas repetidas no Firestore.
+      const consultaMatricula = query(
+        collection(db, "usuarios"),
+        where("matricula", "==", matriculaLimpa),
+      );
+      const resultadoMatricula = await getDocs(consultaMatricula);
+
+      if (!resultadoMatricula.empty) {
+        throw new Error("Essa matrícula já está cadastrada.");
+      }
+
+      // Cria a conta em uma instância secundária para não desconectar o gestor.
+      const credencial = await createUserWithEmailAndPassword(
+        cadastroAuth,
+        emailLimpo,
+        senha,
+      );
+      usuarioAuthCriado = credencial.user;
+
+      // O perfil é salvo usando o Firestore da sessão principal do gestor.
+      await setDoc(doc(db, "usuarios", credencial.user.uid), {
+        nome: nomeLimpo,
+        matricula: matriculaLimpa,
+        email: emailLimpo,
+        tipo: "aprendiz",
+        status: "Ativo",
+        criadoEm: serverTimestamp(),
+      });
+
+      setNome("");
+      setMatricula("");
+      setEmail("");
+      setSenha("");
+      setConfirmarSenha("");
+      setMostrarFormulario(false);
+      setSucesso("Aprendiz cadastrado com sucesso.");
+    } catch (erro) {
+      console.log("Erro ao cadastrar aprendiz:", erro);
+
+      // Se Auth criou a conta, mas o perfil falhou, tenta remover a conta órfã.
+      if (usuarioAuthCriado) {
+        await deleteUser(usuarioAuthCriado).catch((erroExclusao) => {
+          console.log("Não foi possível reverter a conta Auth:", erroExclusao);
+        });
+      }
+
+      const mensagens = {
+        "auth/email-already-in-use": "Esse e-mail já está cadastrado.",
+        "auth/invalid-email": "Digite um e-mail válido.",
+        "auth/weak-password": "A senha é muito fraca.",
+        "auth/operation-not-allowed":
+          "Ative o login por e-mail e senha no Firebase Authentication.",
+        "permission-denied":
+          "O Firestore negou a gravação. Verifique as regras de segurança.",
+      };
+
+      setMensagem(
+        mensagens[erro.code] ||
+          erro.message ||
+          "Não foi possível cadastrar o usuário.",
+      );
+    } finally {
+      // Encerra somente a sessão secundária; a sessão do gestor permanece ativa.
+      await signOut(cadastroAuth).catch(() => {});
+      setSalvando(false);
     }
-
-    // Criar novo usuário
-    const novoUsuario = {
-      id: String(Date.now()),
-      nome: nomeLimpo,
-      matricula: matriculaLimpa,
-      email: emailLimpo,
-      status: "Ativo",
-    };
-
-    // Adicionar usuário à lista
-    setUsuarios((usuariosAtuais) => [...usuariosAtuais, novoUsuario]);
-
-    // Limpar campos
-    setNome("");
-    setMatricula("");
-    setEmail("");
-    setSenha("");
-    setConfirmarSenha("");
-
-    setMensagem("");
-    setSucesso("Usuário cadastrado com sucesso!");
-
-    // Fechar formulário
-    setMostrarFormulario(false);
   };
 
-  // Abrir primeira confirmação
+  // ABRIR A PRIMEIRA CONFIRMAÇÃO
   const confirmarExclusao = (usuario) => {
     setSucesso("");
     setUsuarioSelecionado(usuario);
     setEtapaExclusao(1);
   };
 
-  // Cancelar exclusão
   const cancelarExclusao = () => {
+    if (excluindo) return;
     setEtapaExclusao(0);
     setUsuarioSelecionado(null);
   };
 
-  // Passar para segunda confirmação
-  const continuarExclusao = () => {
-    setEtapaExclusao(2);
+  const continuarExclusao = () => setEtapaExclusao(2);
+
+  // DESATIVAR O PERFIL NO FIRESTORE
+  // O AuthContext já impede o login quando status === "Inativo".
+  const excluirUsuario = async () => {
+    if (!usuarioSelecionado || excluindo) return;
+
+    try {
+      setExcluindo(true);
+      await updateDoc(doc(db, "usuarios", usuarioSelecionado.id), {
+        status: "Inativo",
+        atualizadoEm: serverTimestamp(),
+      });
+
+      setSucesso(
+        `${usuarioSelecionado.nome} foi desativado. A conta não poderá mais entrar no portal.`,
+      );
+      setEtapaExclusao(0);
+      setUsuarioSelecionado(null);
+      // O onSnapshot atualiza a lista automaticamente.
+    } catch (erro) {
+      console.log("Erro ao desativar usuário:", erro);
+      setMensagem(
+        "Não foi possível excluir/desativar. Verifique as regras do Firestore.",
+      );
+      setEtapaExclusao(0);
+      setUsuarioSelecionado(null);
+    } finally {
+      setExcluindo(false);
+    }
   };
 
-  // Excluir usuário definitivamente da lista
-  const excluirUsuario = () => {
-    if (!usuarioSelecionado) return;
-
-    const nomeExcluido = usuarioSelecionado.nome;
-
-    setUsuarios((usuariosAtuais) =>
-      usuariosAtuais.filter((usuario) => usuario.id !== usuarioSelecionado.id),
-    );
-
-    setEtapaExclusao(0);
-    setUsuarioSelecionado(null);
-
-    setSucesso(`${nomeExcluido} foi excluído com sucesso.`);
+  const sair = () => {
+    // Usa a função do AuthContext para limpar o perfil e encerrar a sessão principal.
+    sairSessao();
   };
 
-  const { perfil } = useAuth();
-
-  // Contar usuários ativos
   const contasAtivas = usuarios.filter(
     (usuario) => usuario.status === "Ativo",
   ).length;
@@ -182,26 +267,23 @@ export default function TelaGestorUsuario({ navigation }) {
       <View style={estilo.header}>
         <View>
           <Text style={estilo.headerBrand}>Escola Christus</Text>
-
           <Text style={estilo.headerTitle}>Portal de Frequência</Text>
         </View>
 
-        <View style={estilo.headerUser}>
-          <Text style={estilo.headerUserName}>{perfil?.nome}</Text>
-
-          <Text style={estilo.headerUserRole}>Gestor(a)</Text>
+        <View style={estilo.row}>
+          <View style={estilo.headerUser}>
+            <Text style={estilo.headerUserName}>{perfil?.nome}</Text>
+            <Text style={estilo.headerUserRole}>Gestor(a)</Text>
+          </View>
         </View>
       </View>
 
-      {/* CONTEÚDO */}
       <ScrollView contentContainerStyle={estilo.content}>
         {/* TÍTULO E BOTÃO */}
         <View style={estilo.rowBetween}>
           <View style={{ flex: 1 }}>
             <Text style={estilo.eyebrow}>Área da Gestão</Text>
-
             <Text style={estilo.pageTitle}>Cadastro de usuários</Text>
-
             <Text style={estilo.pageSubtitle}>
               Crie o acesso dos aprendizes e consulte as contas já cadastradas.
             </Text>
@@ -219,16 +301,11 @@ export default function TelaGestorUsuario({ navigation }) {
           </Pressable>
         </View>
 
-        {/* MENSAGEM DE SUCESSO */}
         {sucesso !== "" && (
-          <Text
-            style={{
-              color: "#23804F",
-              marginBottom: 16,
-            }}
-          >
-            {sucesso}
-          </Text>
+          <Text style={{ color: "#23804F", marginBottom: 16 }}>{sucesso}</Text>
+        )}
+        {mensagem !== "" && !mostrarFormulario && (
+          <Text style={{ color: "#B03030", marginBottom: 16 }}>{mensagem}</Text>
         )}
 
         {/* DOIS PAINÉIS */}
@@ -242,18 +319,9 @@ export default function TelaGestorUsuario({ navigation }) {
         >
           {/* FORMULÁRIO */}
           {mostrarFormulario && (
-            <View
-              style={[
-                estilo.cardElevated,
-                {
-                  flex: 1.1,
-                  minWidth: 320,
-                },
-              ]}
-            >
+            <View style={[estilo.cardElevated, { flex: 1.1, minWidth: 320 }]}>
               <View style={estilo.rowBetween}>
                 <Text style={estilo.sectionTitle}>Nova conta de aprendiz</Text>
-
                 <Pressable
                   onPress={() => {
                     setMostrarFormulario(false);
@@ -268,9 +336,7 @@ export default function TelaGestorUsuario({ navigation }) {
                 A senha será usada pelo aprendiz no primeiro acesso.
               </Text>
 
-              {/* NOME COMPLETO */}
               <Text style={estilo.label}>Nome completo</Text>
-
               <TextInput
                 style={estilo.input}
                 placeholder="Digite o nome do aprendiz"
@@ -278,16 +344,9 @@ export default function TelaGestorUsuario({ navigation }) {
                 onChangeText={setNome}
               />
 
-              {/* MATRÍCULA E E-MAIL */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  gap: 12,
-                }}
-              >
+              <View style={{ flexDirection: "row", gap: 12 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={estilo.label}>Matrícula</Text>
-
                   <TextInput
                     style={estilo.input}
                     placeholder="Ex.: 2025004"
@@ -299,7 +358,6 @@ export default function TelaGestorUsuario({ navigation }) {
 
                 <View style={{ flex: 1 }}>
                   <Text style={estilo.label}>E-mail</Text>
-
                   <TextInput
                     style={estilo.input}
                     placeholder="nome@christus.edu.br"
@@ -311,16 +369,9 @@ export default function TelaGestorUsuario({ navigation }) {
                 </View>
               </View>
 
-              {/* SENHA E CONFIRMAÇÃO */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  gap: 12,
-                }}
-              >
+              <View style={{ flexDirection: "row", gap: 12 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={estilo.label}>Senha provisória</Text>
-
                   <TextInput
                     style={estilo.input}
                     placeholder="Mínimo de 6 caracteres"
@@ -332,7 +383,6 @@ export default function TelaGestorUsuario({ navigation }) {
 
                 <View style={{ flex: 1 }}>
                   <Text style={estilo.label}>Confirmar senha</Text>
-
                   <TextInput
                     style={estilo.input}
                     placeholder="Digite novamente"
@@ -343,31 +393,25 @@ export default function TelaGestorUsuario({ navigation }) {
                 </View>
               </View>
 
-              {/* MENSAGEM DE ERRO */}
               {mensagem !== "" && (
-                <Text
-                  style={{
-                    color: "#B03030",
-                    marginBottom: 12,
-                  }}
-                >
+                <Text style={{ color: "#B03030", marginBottom: 12 }}>
                   {mensagem}
                 </Text>
               )}
 
-              {/* BOTÃO CADASTRAR */}
               <Pressable
-                style={estilo.buttonPrimary}
+                style={[estilo.buttonPrimary, salvando && { opacity: 0.6 }]}
                 onPress={cadastrarUsuario}
+                disabled={salvando}
               >
                 <Text style={estilo.buttonPrimaryText}>
-                  Criar conta do aprendiz
+                  {salvando ? "Cadastrando..." : "Criar conta do aprendiz"}
                 </Text>
               </Pressable>
             </View>
           )}
 
-          {/* LISTA DE USUÁRIOS */}
+          {/* LISTA VINDO DO FIRESTORE */}
           <View
             style={[
               estilo.card,
@@ -378,29 +422,28 @@ export default function TelaGestorUsuario({ navigation }) {
               },
             ]}
           >
-            {/* CABEÇALHO DA LISTA */}
-            <View
-              style={[
-                estilo.cardHeader,
-                {
-                  padding: 16,
-                  marginBottom: 0,
-                },
-              ]}
-            >
+            <View style={[estilo.cardHeader, { padding: 16, marginBottom: 0 }]}>
               <View>
                 <Text style={estilo.sectionTitle}>Usuários cadastrados</Text>
-
                 <Text style={estilo.sectionSubtitle}>
                   {contasAtivas} contas ativas
                 </Text>
               </View>
             </View>
 
-            {/* EXIBIR USUÁRIOS */}
-            {usuarios.length === 0 ? (
+            {carregando ? (
+              <ActivityIndicator
+                size="large"
+                color="#23804F"
+                style={{ padding: 25 }}
+              />
+            ) : erroLista !== "" ? (
               <Text style={[estilo.textMuted, { padding: 16 }]}>
-                Nenhum usuário cadastrado.
+                {erroLista}
+              </Text>
+            ) : usuarios.length === 0 ? (
+              <Text style={[estilo.textMuted, { padding: 16 }]}>
+                Nenhum aprendiz ativo encontrado no banco de dados.
               </Text>
             ) : (
               usuarios.map((usuario, index) => (
@@ -415,30 +458,17 @@ export default function TelaGestorUsuario({ navigation }) {
                   <View
                     style={[estilo.rowBetween, { alignItems: "flex-start" }]}
                   >
-                    <View
-                      style={{
-                        flex: 1,
-                        paddingRight: 12,
-                      }}
-                    >
+                    <View style={{ flex: 1, paddingRight: 12 }}>
                       <Text style={[estilo.text, { fontWeight: "800" }]}>
                         {usuario.nome}
                       </Text>
-
                       <Text style={[estilo.textMuted, { marginTop: 4 }]}>
                         Matrícula {usuario.matricula}
                       </Text>
-
                       <Text style={estilo.textMuted}>{usuario.email}</Text>
                     </View>
 
-                    {/* STATUS E EXCLUIR */}
-                    <View
-                      style={{
-                        alignItems: "flex-end",
-                        gap: 8,
-                      }}
-                    >
+                    <View style={{ alignItems: "flex-end", gap: 8 }}>
                       <View style={[estilo.badge, estilo.badgeSuccess]}>
                         <Text
                           style={[estilo.badgeText, estilo.badgeSuccessText]}
@@ -447,12 +477,11 @@ export default function TelaGestorUsuario({ navigation }) {
                         </Text>
                       </View>
 
-                      {/* BOTÃO EXCLUIR */}
                       <Pressable
                         style={[estilo.buttonDanger, estilo.buttonSmall]}
                         onPress={() => confirmarExclusao(usuario)}
                       >
-                        <Text style={estilo.buttonDangerText}>Excluir</Text>
+                        <Text style={estilo.buttonDangerText}>Desativar</Text>
                       </Pressable>
                     </View>
                   </View>
@@ -490,21 +519,13 @@ export default function TelaGestorUsuario({ navigation }) {
             }}
           >
             <Text style={estilo.sectionTitle}>
-              {etapaExclusao === 1 ? "Excluir usuário?" : "Confirmação final"}
+              {etapaExclusao === 1 ? "Desativar usuário?" : "Confirmação final"}
             </Text>
 
-            <Text
-              style={[
-                estilo.text,
-                {
-                  marginTop: 12,
-                  marginBottom: 20,
-                },
-              ]}
-            >
+            <Text style={[estilo.text, { marginTop: 12, marginBottom: 20 }]}>
               {etapaExclusao === 1
-                ? `Deseja excluir o usuário ${usuarioSelecionado?.nome}?`
-                : `Tem certeza que deseja excluir ${usuarioSelecionado?.nome}? Essa ação não poderá ser desfeita.`}
+                ? `Deseja desativar o usuário ${usuarioSelecionado?.nome}?`
+                : `Tem certeza que deseja desativar ${usuarioSelecionado?.nome}? O acesso dessa conta ao portal será bloqueado.`}
             </Text>
 
             <View
@@ -515,25 +536,29 @@ export default function TelaGestorUsuario({ navigation }) {
                 gap: 10,
               }}
             >
-              {/* CANCELAR */}
               <Pressable
                 style={estilo.buttonOutline}
                 onPress={cancelarExclusao}
+                disabled={excluindo}
               >
                 <Text style={estilo.buttonOutlineText}>
                   {etapaExclusao === 1 ? "Cancelar" : "Não excluir"}
                 </Text>
               </Pressable>
 
-              {/* CONTINUAR OU EXCLUIR */}
               <Pressable
                 style={estilo.buttonDanger}
                 onPress={
                   etapaExclusao === 1 ? continuarExclusao : excluirUsuario
                 }
+                disabled={excluindo}
               >
                 <Text style={estilo.buttonDangerText}>
-                  {etapaExclusao === 1 ? "Continuar" : "Sim, excluir"}
+                  {excluindo
+                    ? "Processando..."
+                    : etapaExclusao === 1
+                      ? "Continuar"
+                      : "Sim, desativar"}
                 </Text>
               </Pressable>
             </View>

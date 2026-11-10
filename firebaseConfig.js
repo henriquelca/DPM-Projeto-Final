@@ -1,6 +1,10 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { Platform } from "react-native";
-import { getAuth, initializeAuth, getReactNativePersistence } from "firebase/auth";
+import {
+  getAuth,
+  initializeAuth,
+  getReactNativePersistence,
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -13,11 +17,36 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth =
-  Platform.OS === "web"
-    ? getAuth(app)
-    : initializeAuth(app, {
-        persistence: getReactNativePersistence(AsyncStorage),
-      });
+// Reaproveita o aplicativo principal, inclusive durante o Fast Refresh.
+const app =
+  getApps().find((item) => item.name === "[DEFAULT]") ||
+  initializeApp(firebaseConfig);
+
+function obterAuth(appFirebase) {
+  if (Platform.OS === "web") {
+    return getAuth(appFirebase);
+  }
+
+  try {
+    return initializeAuth(appFirebase, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+  } catch (erro) {
+    // Durante o Fast Refresh, o Auth pode já ter sido inicializado.
+    if (erro.code === "auth/already-initialized") {
+      return getAuth(appFirebase);
+    }
+    throw erro;
+  }
+}
+
+// Autenticação principal: utilizada pelo gestor e pelo login do aplicativo.
+export const auth = obterAuth(app);
 export const db = getFirestore(app);
+
+// Segunda instância para cadastrar aprendizes sem desconectar o gestor.
+const appCadastro =
+  getApps().find((item) => item.name === "cadastroUsuarios") ||
+  initializeApp(firebaseConfig, "cadastroUsuarios");
+
+export const cadastroAuth = obterAuth(appCadastro);
