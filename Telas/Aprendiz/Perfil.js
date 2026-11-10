@@ -7,6 +7,10 @@ import { useAuth } from '../../AuthContext';
 export default function PerfilAprendizScreen() {
   const { perfil, sair } = useAuth();
 
+  if (perfil === null) {
+    return null;
+  }
+
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>

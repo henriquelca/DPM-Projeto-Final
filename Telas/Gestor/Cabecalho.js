@@ -6,6 +6,10 @@ import { useAuth } from "../../AuthContext";
 export default function CabecalhoGestor() {
   const { perfil } = useAuth();
 
+  if (perfil === null) {
+    return null;
+  }
+
   return (
     <View style={[estilo.header, { paddingBottom: 12 }]}>
       <View>

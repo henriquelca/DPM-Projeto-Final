@@ -73,8 +73,8 @@ export function AuthProvider({ children }) {
   }
 
   async function sair() {
-    await signOut(auth);
     setPerfil(null);
+    await signOut(auth);
   }
 
   async function recuperarSenha(email) {

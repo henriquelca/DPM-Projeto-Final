@@ -23,7 +23,7 @@ function Rotas() {
 
   if (perfil === null) {
     return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator key="login" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={TelaLogin} />
       </Stack.Navigator>
     );
@@ -31,14 +31,14 @@ function Rotas() {
 
   if (perfil.tipo === "gestor") {
     return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator key="gestor" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Gestor" component={NavegacaoGestor} />
       </Stack.Navigator>
     );
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator key="aprendiz" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="AprendizTabs" component={AprendizTabs} />
     </Stack.Navigator>
   );
