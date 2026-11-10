@@ -35,6 +35,7 @@ export function mensagemDeErro(erro) {
 export function AuthProvider({ children }) {
   const [perfil, setPerfil] = useState(null);
   const [carregando, setCarregando] = useState(true);
+  const [saindo, setSaindo] = useState(false);
 
   useEffect(() => {
     async function verificarLoginSalvo() {
@@ -72,10 +73,17 @@ export function AuthProvider({ children }) {
     setPerfil(dados);
   }
 
-  async function sair() {
+  function sair() {
     setPerfil(null);
-    await signOut(auth);
+    setSaindo(true);
   }
+
+  useEffect(() => {
+    if (saindo) {
+      signOut(auth);
+      setSaindo(false);
+    }
+  }, [saindo]);
 
   async function recuperarSenha(email) {
     await sendPasswordResetEmail(auth, email.trim());
