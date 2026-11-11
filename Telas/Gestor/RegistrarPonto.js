@@ -8,19 +8,11 @@ import {
   ActivityIndicator,
   useWindowDimensions,
   Platform,
-  Alert,
   Modal,
-  TextInput,
+  TextInput
 } from "react-native";
-import { db } from "../../firebaseConfig";
-import {
-  collection,
-  onSnapshot,
-  doc,
-  deleteDoc,
-  updateDoc,
-  addDoc,
-} from "firebase/firestore";
+import { db } from "../../firebaseConfig"; 
+import { collection, onSnapshot, doc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
 import estilo, { badgeStyle } from "../../css";
 
 export default function TelaGestorRegistrarPonto() {
@@ -30,10 +22,14 @@ export default function TelaGestorRegistrarPonto() {
   const [carregando, setCarregando] = useState(true);
 
   // Estados para o Modal de Correção
-  const [modalVisivel, setModalVisivel] = useState(false);
+  const [modalCorrigirVisivel, setModalCorrigirVisivel] = useState(false);
   const [registroEditando, setRegistroEditando] = useState(null);
   const [novaEntrada, setNovaEntrada] = useState("");
   const [novaSaida, setNovaSaida] = useState("");
+
+  // Estados para o Modal de Exclusão
+  const [modalExcluirVisivel, setModalExcluirVisivel] = useState(false);
+  const [registroParaExcluir, setRegistroParaExcluir] = useState(null);
 
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
@@ -42,9 +38,7 @@ export default function TelaGestorRegistrarPonto() {
   const colData = isMobile ? { width: 100 } : { flex: 1.5 };
   const colHora = isMobile ? { width: 80 } : { flex: 1 };
   const colStatus = isMobile ? { width: 100 } : { flex: 1.2 };
-  const colAcoes = isMobile
-    ? { width: 140 }
-    : { flex: 1.5, justifyContent: "flex-start" };
+  const colAcoes = isMobile ? { width: 140 } : { flex: 1.5, justifyContent: 'flex-start' };
 
   useEffect(() => {
     const unsubUsuarios = onSnapshot(collection(db, "usuarios"), (snapshot) => {
@@ -73,26 +67,13 @@ export default function TelaGestorRegistrarPonto() {
     if (Object.keys(usuarios).length === 0) return;
 
     const hoje = new Date();
-    const dia = String(hoje.getDate()).padStart(2, "0");
-    const mesNumerico = String(hoje.getMonth() + 1).padStart(2, "0");
+    const dia = String(hoje.getDate()).padStart(2, '0');
+    const mesNumerico = String(hoje.getMonth() + 1).padStart(2, '0');
     const ano = hoje.getFullYear();
-    const dataFiltroHoje = `${dia}/${mesNumerico}/${ano}`;
+    const dataFiltroHoje = `${dia}/${mesNumerico}/${ano}`; 
 
-    const mesesAbrev = [
-      "jan",
-      "fev",
-      "mar",
-      "abr",
-      "mai",
-      "jun",
-      "jul",
-      "ago",
-      "set",
-      "out",
-      "nov",
-      "dez",
-    ];
-    const dataExibicao = `Hoje, ${dia} ${mesesAbrev[hoje.getMonth()]}`;
+    const mesesAbrev = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+    const dataExibicao = `Hoje, ${dia} de ${mesesAbrev[hoje.getMonth()]}`;
 
     const listaFinal = [];
 
@@ -102,31 +83,25 @@ export default function TelaGestorRegistrarPonto() {
 
       let entrada = "—";
       let saida = "—";
-      let situacao = "Ausente";
+      let situacao = "Ausente"; 
       let docIdEntrada = null;
       let docIdSaida = null;
 
       pontosBrutos.forEach((ponto) => {
         if (ponto.usuarioId === user.id && ponto.dataHora) {
-          let pData =
-            typeof ponto.dataHora.toDate === "function"
-              ? ponto.dataHora.toDate()
-              : new Date(ponto.dataHora);
-          const pDia = String(pData.getDate()).padStart(2, "0");
-          const pMes = String(pData.getMonth() + 1).padStart(2, "0");
+          let pData = typeof ponto.dataHora.toDate === 'function' ? ponto.dataHora.toDate() : new Date(ponto.dataHora); 
+          const pDia = String(pData.getDate()).padStart(2, '0');
+          const pMes = String(pData.getMonth() + 1).padStart(2, '0');
           const pAno = pData.getFullYear();
           const pDataStr = `${pDia}/${pMes}/${pAno}`;
 
           if (pDataStr === dataFiltroHoje) {
-            const horaFormatada = pData.toLocaleTimeString("pt-BR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-            if (ponto.tipo === "entrada") {
+            const horaFormatada = pData.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            if (ponto.tipo === 'entrada') {
               entrada = horaFormatada;
               docIdEntrada = ponto.id;
-              situacao = "Presente";
-            } else if (ponto.tipo === "saida") {
+              situacao = "Presente"; 
+            } else if (ponto.tipo === 'saida') {
               saida = horaFormatada;
               docIdSaida = ponto.id;
             }
@@ -142,7 +117,7 @@ export default function TelaGestorRegistrarPonto() {
         saida,
         situacao,
         docIdEntrada,
-        docIdSaida,
+        docIdSaida
       });
     });
 
@@ -151,38 +126,33 @@ export default function TelaGestorRegistrarPonto() {
     setCarregando(false);
   }, [usuarios, pontosBrutos]);
 
-  // FUNÇÃO DE EXCLUIR (Com suporte a Mobile e Web)
-  const excluirRegistro = (item) => {
+  // FUNÇÕES DE EXCLUIR
+  const abrirModalExcluir = (item) => {
     if (!item.docIdEntrada && !item.docIdSaida) {
-      if (Platform.OS === "web")
-        window.alert("Este aprendiz não possui registos hoje.");
-      else Alert.alert("Aviso", "Este aprendiz não possui registos hoje.");
-      return;
+      return; // Se não tem registros, não faz nada
     }
+    setRegistroParaExcluir(item);
+    setModalExcluirVisivel(true);
+  };
 
-    const confirmarExclusao = async () => {
-      try {
-        if (item.docIdEntrada)
-          await deleteDoc(doc(db, "pontos", item.docIdEntrada));
-        if (item.docIdSaida)
-          await deleteDoc(doc(db, "pontos", item.docIdSaida));
-      } catch (err) {
-        console.error("Erro ao excluir:", err);
+  const confirmarExclusao = async () => {
+    if (!registroParaExcluir) return;
+    
+    try {
+      if (registroParaExcluir.docIdEntrada) {
+        await deleteDoc(doc(db, "pontos", registroParaExcluir.docIdEntrada));
       }
-    };
 
-    if (Platform.OS === "web") {
-      if (window.confirm(`Excluir os registros de ${item.nome}?`))
-        confirmarExclusao();
-    } else {
-      Alert.alert(
-        "Confirmar Exclusão",
-        `Deseja excluir os registros de ${item.nome}?`,
-        [
-          { text: "Cancelar", style: "cancel" },
-          { text: "Excluir", style: "destructive", onPress: confirmarExclusao },
-        ],
-      );
+      if (registroParaExcluir.docIdSaida) {
+        await deleteDoc(doc(db, "pontos", registroParaExcluir.docIdSaida));
+      }
+
+      setModalExcluirVisivel(false);
+      setRegistroParaExcluir(null);
+
+    } catch (err) {
+      console.error("Erro ao excluir:", err);
+      alert("Erro ao excluir: " + err.message); // Mantemos apenas o alerta de erro real
     }
   };
 
@@ -191,61 +161,42 @@ export default function TelaGestorRegistrarPonto() {
     setRegistroEditando(item);
     setNovaEntrada(item.entrada !== "—" ? item.entrada : "");
     setNovaSaida(item.saida !== "—" ? item.saida : "");
-    setModalVisivel(true);
+    setModalCorrigirVisivel(true);
   };
 
   const salvarCorrecao = async () => {
     if (!registroEditando) return;
-    const baseDate = new Date(); // Assume a data de hoje
+    const baseDate = new Date(); 
 
     try {
-      // Tratar correção da Entrada
-      if (novaEntrada && novaEntrada.includes(":")) {
-        const [h, m] = novaEntrada.split(":");
+      if (novaEntrada && novaEntrada.includes(':')) {
+        const [h, m] = novaEntrada.split(':');
         const dataEnt = new Date(baseDate);
         dataEnt.setHours(parseInt(h), parseInt(m), 0);
 
         if (registroEditando.docIdEntrada) {
-          // Atualiza se já existir
-          await updateDoc(doc(db, "pontos", registroEditando.docIdEntrada), {
-            dataHora: dataEnt,
-          });
+          await updateDoc(doc(db, "pontos", registroEditando.docIdEntrada), { dataHora: dataEnt });
         } else {
-          // Cria novo se ele tinha esquecido de bater a entrada
-          await addDoc(collection(db, "pontos"), {
-            usuarioId: registroEditando.chave,
-            tipo: "entrada",
-            dataHora: dataEnt,
-          });
+          await addDoc(collection(db, "pontos"), { usuarioId: registroEditando.chave, tipo: "entrada", dataHora: dataEnt });
         }
       }
 
-      // Tratar correção da Saída
-      if (novaSaida && novaSaida.includes(":")) {
-        const [h, m] = novaSaida.split(":");
+      if (novaSaida && novaSaida.includes(':')) {
+        const [h, m] = novaSaida.split(':');
         const dataSai = new Date(baseDate);
         dataSai.setHours(parseInt(h), parseInt(m), 0);
 
         if (registroEditando.docIdSaida) {
-          await updateDoc(doc(db, "pontos", registroEditando.docIdSaida), {
-            dataHora: dataSai,
-          });
+          await updateDoc(doc(db, "pontos", registroEditando.docIdSaida), { dataHora: dataSai });
         } else {
-          await addDoc(collection(db, "pontos"), {
-            usuarioId: registroEditando.chave,
-            tipo: "saida",
-            dataHora: dataSai,
-          });
+          await addDoc(collection(db, "pontos"), { usuarioId: registroEditando.chave, tipo: "saida", dataHora: dataSai });
         }
       }
 
-      setModalVisivel(false);
-      if (Platform.OS !== "web") Alert.alert("Sucesso", "Correção salva!");
+      setModalCorrigirVisivel(false);
     } catch (err) {
       console.error("Erro ao salvar:", err);
-      if (Platform.OS !== "web")
-        Alert.alert("Erro", "Falha ao salvar correção.");
-      else window.alert("Falha ao salvar correção.");
+      alert("Falha ao salvar correção: " + err.message); // Mantemos apenas o alerta de erro real
     }
   };
 
@@ -261,10 +212,8 @@ export default function TelaGestorRegistrarPonto() {
       </View>
 
       {registrosTabela.length === 0 && (
-        <View style={{ padding: 20, alignItems: "center" }}>
-          <Text style={estilo.textMuted}>
-            Nenhum aprendiz ativo encontrado.
-          </Text>
+        <View style={{ padding: 20, alignItems: 'center' }}>
+          <Text style={estilo.textMuted}>Nenhum aprendiz ativo encontrado.</Text>
         </View>
       )}
 
@@ -273,23 +222,16 @@ export default function TelaGestorRegistrarPonto() {
 
         return (
           <View key={item.chave} style={estilo.tableRow}>
-            <Text
-              style={[estilo.tableCell, estilo.tableCellBold, colAprendiz]}
-              numberOfLines={1}
-            >
+            <Text style={[estilo.tableCell, estilo.tableCellBold, colAprendiz]} numberOfLines={1}>
               {item.nome}
             </Text>
-            <Text style={[estilo.tableCell, colData]} numberOfLines={1}>
-              {item.dataExibicao}
-            </Text>
+            <Text style={[estilo.tableCell, colData]} numberOfLines={1}>{item.dataExibicao}</Text>
             <Text style={[estilo.tableCell, colHora]}>{item.entrada}</Text>
             <Text style={[estilo.tableCell, colHora]}>{item.saida}</Text>
-
+            
             <View style={[estilo.tableCell, colStatus]}>
               <View style={[estilo.badge, bgStyle]}>
-                <Text style={[estilo.badgeText, textStyle]}>
-                  {item.situacao}
-                </Text>
+                <Text style={[estilo.badgeText, textStyle]}>{item.situacao}</Text>
               </View>
             </View>
 
@@ -301,12 +243,8 @@ export default function TelaGestorRegistrarPonto() {
                 <Text style={estilo.buttonOutlineText}>Corrigir</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[
-                  estilo.buttonDanger,
-                  estilo.buttonSmall,
-                  !item.docIdEntrada && !item.docIdSaida && { opacity: 0.5 },
-                ]}
-                onPress={() => excluirRegistro(item)}
+                style={[estilo.buttonDanger, estilo.buttonSmall, (!item.docIdEntrada && !item.docIdSaida) && { opacity: 0.5 }]}
+                onPress={() => abrirModalExcluir(item)}
               >
                 <Text style={estilo.buttonDangerText}>Excluir</Text>
               </TouchableOpacity>
@@ -327,66 +265,31 @@ export default function TelaGestorRegistrarPonto() {
         </Text>
 
         {carregando ? (
-          <ActivityIndicator
-            size="large"
-            color="#2E8B57"
-            style={{ marginTop: 40 }}
-          />
-        ) : isMobile ? (
-          <ScrollView
-            horizontal={true}
-            showsHorizontalScrollIndicator={true}
-            style={{ marginTop: 10 }}
-          >
-            {conteudoTabela}
-          </ScrollView>
+          <ActivityIndicator size="large" color="#2E8B57" style={{ marginTop: 40 }} />
         ) : (
-          <View style={{ marginTop: 10, width: "100%" }}>{conteudoTabela}</View>
+          isMobile ? (
+            <ScrollView horizontal={true} showsHorizontalScrollIndicator={true} style={{ marginTop: 10 }}>
+              {conteudoTabela}
+            </ScrollView>
+          ) : (
+            <View style={{ marginTop: 10, width: '100%' }}>
+              {conteudoTabela}
+            </View>
+          )
         )}
       </ScrollView>
 
       {/* MODAL DE CORREÇÃO DE PONTO */}
-      <Modal visible={modalVisivel} transparent={true} animationType="fade">
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            justifyContent: "center",
-            padding: 20,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: "#FFF",
-              padding: 24,
-              borderRadius: 12,
-              shadowColor: "#000",
-              elevation: 5,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "bold",
-                color: "#163A2B",
-                marginBottom: 15,
-              }}
-            >
+      <Modal visible={modalCorrigirVisivel} transparent={true} animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: '#FFF', padding: 24, borderRadius: 12, shadowColor: '#000', elevation: 5, maxWidth: 400, alignSelf: 'center', width: '100%' }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#163A2B', marginBottom: 15 }}>
               Corrigir Ponto: {registroEditando?.nome}
             </Text>
 
-            <Text style={{ fontSize: 14, color: "#334155", marginBottom: 5 }}>
-              Hora de Entrada (HH:MM)
-            </Text>
+            <Text style={{ fontSize: 14, color: '#334155', marginBottom: 5 }}>Hora de Entrada (HH:MM)</Text>
             <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: "#CBD5E1",
-                padding: 12,
-                borderRadius: 6,
-                marginBottom: 15,
-                fontSize: 16,
-              }}
+              style={{ borderWidth: 1, borderColor: '#CBD5E1', padding: 12, borderRadius: 6, marginBottom: 15, fontSize: 16 }}
               value={novaEntrada}
               onChangeText={setNovaEntrada}
               placeholder="Ex: 08:00"
@@ -394,18 +297,9 @@ export default function TelaGestorRegistrarPonto() {
               maxLength={5}
             />
 
-            <Text style={{ fontSize: 14, color: "#334155", marginBottom: 5 }}>
-              Hora de Saída (HH:MM)
-            </Text>
+            <Text style={{ fontSize: 14, color: '#334155', marginBottom: 5 }}>Hora de Saída (HH:MM)</Text>
             <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: "#CBD5E1",
-                padding: 12,
-                borderRadius: 6,
-                marginBottom: 24,
-                fontSize: 16,
-              }}
+              style={{ borderWidth: 1, borderColor: '#CBD5E1', padding: 12, borderRadius: 6, marginBottom: 24, fontSize: 16 }}
               value={novaSaida}
               onChangeText={setNovaSaida}
               placeholder="Ex: 12:00"
@@ -413,44 +307,56 @@ export default function TelaGestorRegistrarPonto() {
               maxLength={5}
             />
 
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "flex-end",
-                gap: 12,
-              }}
-            >
-              <TouchableOpacity
-                onPress={() => setModalVisivel(false)}
-                style={{
-                  paddingVertical: 10,
-                  paddingHorizontal: 16,
-                  borderRadius: 6,
-                  backgroundColor: "#F1F5F9",
-                }}
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+              <TouchableOpacity 
+                onPress={() => setModalCorrigirVisivel(false)} 
+                style={{ paddingVertical: 10, paddingHorizontal: 16, borderRadius: 6, backgroundColor: '#F1F5F9' }}
               >
-                <Text style={{ color: "#475569", fontWeight: "bold" }}>
-                  Cancelar
-                </Text>
+                <Text style={{ color: '#475569', fontWeight: 'bold' }}>Cancelar</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={salvarCorrecao}
-                style={{
-                  paddingVertical: 10,
-                  paddingHorizontal: 16,
-                  borderRadius: 6,
-                  backgroundColor: "#2E8B57",
-                }}
+              
+              <TouchableOpacity 
+                onPress={salvarCorrecao} 
+                style={{ paddingVertical: 10, paddingHorizontal: 16, borderRadius: 6, backgroundColor: '#2E8B57' }}
               >
-                <Text style={{ color: "#FFF", fontWeight: "bold" }}>
-                  Salvar Alterações
-                </Text>
+                <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Salvar Alterações</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
+
+      {/* MODAL DE EXCLUSÃO DE PONTO */}
+      <Modal visible={modalExcluirVisivel} transparent={true} animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: '#FFF', padding: 24, borderRadius: 12, shadowColor: '#000', elevation: 5, maxWidth: 400, alignSelf: 'center', width: '100%' }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#163A2B', marginBottom: 15 }}>
+              Confirmar Exclusão
+            </Text>
+
+            <Text style={{ fontSize: 16, color: '#334155', marginBottom: 24, lineHeight: 22 }}>
+              Tem certeza que deseja excluir os registros de ponto de <Text style={{fontWeight: 'bold'}}>{registroParaExcluir?.nome}</Text> de hoje? Esta ação não pode ser desfeita.
+            </Text>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+              <TouchableOpacity 
+                onPress={() => setModalExcluirVisivel(false)} 
+                style={{ paddingVertical: 10, paddingHorizontal: 16, borderRadius: 6, backgroundColor: '#F1F5F9' }}
+              >
+                <Text style={{ color: '#475569', fontWeight: 'bold' }}>Cancelar</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={confirmarExclusao} 
+                style={{ paddingVertical: 10, paddingHorizontal: 16, borderRadius: 6, backgroundColor: '#DC2626' }}
+              >
+                <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Sim, Excluir</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
