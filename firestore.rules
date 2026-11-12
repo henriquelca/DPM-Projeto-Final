@@ -23,9 +23,10 @@ service cloud.firestore {
 
     match /pontos/{id} {
       allow read: if ehDono(resource.data.usuarioId) || ehGestor();
-      allow create: if ehDono(request.resource.data.usuarioId)
-                    && request.resource.data.dataHora == request.time
-                    && request.resource.data.tipo in ["entrada", "saida"];
+      allow create: if ehGestor()
+                    || (ehDono(request.resource.data.usuarioId)
+                        && request.resource.data.dataHora == request.time
+                        && request.resource.data.tipo in ["entrada", "saida"]);
       allow update, delete: if ehGestor();
     }
 
