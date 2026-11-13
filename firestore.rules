@@ -33,13 +33,13 @@ service cloud.firestore {
     match /justificativas/{id} {
       allow read: if ehDono(resource.data.usuarioId) || ehGestor();
       allow create: if ehDono(request.resource.data.usuarioId)
-                    && request.resource.data.status == "pendente";
+                    && request.resource.data.status in ["pendente", "Pendente"];
       allow update: if ehGestor()
                     || (ehDono(resource.data.usuarioId)
-                        && resource.data.status == "pendente"
-                        && request.resource.data.status == "pendente"
+                        && resource.data.status in ["pendente", "Pendente"]
+                        && request.resource.data.status in ["pendente", "Pendente"]
                         && request.resource.data.usuarioId == resource.data.usuarioId);
-      allow delete: if ehDono(resource.data.usuarioId) && resource.data.status == "pendente";
+      allow delete: if ehDono(resource.data.usuarioId) && resource.data.status in ["pendente", "Pendente"];
     }
   }
 }
