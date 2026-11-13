@@ -6,10 +6,12 @@ import {
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
+  Alert
 } from "react-native";
 import { db } from "../../firebaseConfig";
-import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, writeBatch } from "firebase/firestore";
 import estilo, { badgeStyle } from "../../css";
+import { Feather } from "@expo/vector-icons";
 
 export default function TelaGestorJustificativas() {
   const [usuarios, setUsuarios] = useState({});
@@ -19,6 +21,9 @@ export default function TelaGestorJustificativas() {
 
   // Controle do filtro selecionado (Todas, Pendente, Aprovado, Rejeitado)
   const [filtroAtual, setFiltroAtual] = useState("Todas");
+  
+  // Estado para armazenar os IDs das justificativas selecionadas
+  const [selecionados, setSelecionados] = useState([]);
 
   // 1. Puxar todos os utilizadores e justificativas do banco
   useEffect(() => {
@@ -55,7 +60,6 @@ export default function TelaGestorJustificativas() {
     let listaProcessada = justificativasBrutas.map((just) => {
       const user = usuarios[just.usuarioId];
 
-      // Formatar data (se vier como Timestamp do Firebase ou String)
       let dataFormatada = "Data não informada";
       if (just.data) {
         const dataObj =
@@ -76,20 +80,13 @@ export default function TelaGestorJustificativas() {
       };
     });
 
-    // Ordenar das mais recentes para as mais antigas (opcional)
+    // Ordenar das mais recentes para as mais antigas
     listaProcessada.sort((a, b) => {
-      const dataA =
-        a.data && typeof a.data.toDate === "function"
-          ? a.data.toDate()
-          : new Date(a.data || 0);
-      const dataB =
-        b.data && typeof b.data.toDate === "function"
-          ? b.data.toDate()
-          : new Date(b.data || 0);
+      const dataA = a.data && typeof a.data.toDate === "function" ? a.data.toDate() : new Date(a.data || 0);
+      const dataB = b.data && typeof b.data.toDate === "function" ? b.data.toDate() : new Date(b.data || 0);
       return dataB - dataA;
     });
 
-    // Aplicar o filtro clicado nos botões do topo
     if (filtroAtual !== "Todas") {
       listaProcessada = listaProcessada.filter(
         (item) => item.statusAtual.toLowerCase() === filtroAtual.toLowerCase(),
@@ -100,21 +97,52 @@ export default function TelaGestorJustificativas() {
     setCarregando(false);
   }, [usuarios, justificativasBrutas, filtroAtual]);
 
-  // Função para atualizar o status no Firebase ao clicar em Aprovar ou Rejeitar
-  const atualizarStatus = async (idJustificativa, novoStatus) => {
-    try {
-      const docRef = doc(db, "justificativas", idJustificativa);
-      await updateDoc(docRef, {
-        status: novoStatus,
-      });
-      console.log(`Status atualizado para ${novoStatus}`);
-    } catch (error) {
-      console.error("Erro ao atualizar status:", error);
-      alert("Erro ao atualizar a justificativa.");
+  // Função para marcar/desmarcar um item
+  const toggleSelecao = (id) => {
+    if (selecionados.includes(id)) {
+      setSelecionados(selecionados.filter((itemId) => itemId !== id));
+    } else {
+      setSelecionados([...selecionados, id]);
     }
   };
 
-  // Botões de filtro do topo
+  // Função para atualizar status individual
+  const atualizarStatus = async (idJustificativa, novoStatus) => {
+    try {
+      const docRef = doc(db, "justificativas", idJustificativa);
+      await updateDoc(docRef, { status: novoStatus });
+      setSelecionados(selecionados.filter(id => id !== idJustificativa));
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      Alert.alert("Erro", "Erro ao atualizar a justificativa.");
+    }
+  };
+
+  // Função para atualizar VÁRIOS status de uma vez usando batch
+  const atualizarStatusEmMassa = async (novoStatus) => {
+    if (selecionados.length === 0) return;
+    try {
+      const batch = writeBatch(db);
+      
+      selecionados.forEach((id) => {
+        const docRef = doc(db, "justificativas", id);
+        batch.update(docRef, { status: novoStatus });
+      });
+
+      await batch.commit();
+      setSelecionados([]); 
+      Alert.alert("Sucesso", `Foram marcadas como ${novoStatus} com sucesso!`);
+    } catch (error) {
+      console.error("Erro ao atualizar em massa:", error);
+      Alert.alert("Erro", "Não foi possível atualizar as justificativas selecionadas.");
+    }
+  };
+
+  const mudarFiltro = (filtro) => {
+    setFiltroAtual(filtro);
+    setSelecionados([]);
+  };
+
   const botoesFiltro = ["Todas", "Pendente", "Aprovado", "Rejeitado"];
 
   return (
@@ -127,14 +155,7 @@ export default function TelaGestorJustificativas() {
         </Text>
 
         {/* Botões de Filtro */}
-        <View
-          style={{
-            flexDirection: "row",
-            gap: 10,
-            marginBottom: 20,
-            flexWrap: "wrap",
-          }}
-        >
+        <View style={{ flexDirection: "row", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
           {botoesFiltro.map((filtro) => {
             const isAtivo = filtroAtual === filtro;
             return (
@@ -143,19 +164,11 @@ export default function TelaGestorJustificativas() {
                 style={[
                   estilo.buttonOutline,
                   estilo.buttonSmall,
-                  isAtivo && {
-                    backgroundColor: "#2E8B57",
-                    borderColor: "#2E8B57",
-                  }, // Verde se ativo
+                  isAtivo && { backgroundColor: "#2E8B57", borderColor: "#2E8B57" },
                 ]}
-                onPress={() => setFiltroAtual(filtro)}
+                onPress={() => mudarFiltro(filtro)}
               >
-                <Text
-                  style={[
-                    estilo.buttonOutlineText,
-                    isAtivo && { color: "#FFF" },
-                  ]}
-                >
+                <Text style={[estilo.buttonOutlineText, isAtivo && { color: "#FFF" }]}>
                   {filtro}
                 </Text>
               </TouchableOpacity>
@@ -163,12 +176,41 @@ export default function TelaGestorJustificativas() {
           })}
         </View>
 
+        {/* Painel de Ações em Massa (Aparece apenas quando há itens selecionados) */}
+        {selecionados.length > 0 && (
+          <View style={{
+            flexDirection: 'row', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            backgroundColor: '#F8FAFC', 
+            padding: 15, 
+            borderRadius: 8, 
+            borderWidth: 1,
+            borderColor: '#CBD5E1',
+            marginBottom: 20
+          }}>
+            <Text style={{ fontWeight: 'bold', color: '#334155', fontSize: 16 }}>
+              {selecionados.length} selecionado{selecionados.length > 1 ? 's' : ''}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity 
+                onPress={() => atualizarStatusEmMassa("Aprovado")} 
+                style={{ backgroundColor: '#2E8B57', paddingHorizontal: 15, paddingVertical: 10, borderRadius: 6 }}
+              >
+                <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Aprovar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => atualizarStatusEmMassa("Rejeitado")} 
+                style={{ backgroundColor: '#EF4444', paddingHorizontal: 15, paddingVertical: 10, borderRadius: 6 }}
+              >
+                <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Rejeitar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {carregando ? (
-          <ActivityIndicator
-            size="large"
-            color="#2E8B57"
-            style={{ marginTop: 40 }}
-          />
+          <ActivityIndicator size="large" color="#2E8B57" style={{ marginTop: 40 }} />
         ) : (
           <View style={{ gap: 15 }}>
             {listaExibicao.length === 0 && (
@@ -181,16 +223,19 @@ export default function TelaGestorJustificativas() {
 
             {listaExibicao.map((item) => {
               const [bgStyle, textStyle] = badgeStyle(item.statusAtual);
+              const isSelecionado = selecionados.includes(item.id);
 
               return (
-                <View
+                <TouchableOpacity
                   key={item.id}
+                  activeOpacity={0.8}
+                  onPress={() => toggleSelecao(item.id)} 
                   style={{
-                    backgroundColor: "#FFF",
+                    backgroundColor: isSelecionado ? "#F0FDF4" : "#FFF", 
                     padding: 20,
                     borderRadius: 8,
                     borderWidth: 1,
-                    borderColor: "#E2E8F0",
+                    borderColor: isSelecionado ? "#2E8B57" : "#E2E8F0",
                     shadowColor: "#000",
                     shadowOffset: { width: 0, height: 1 },
                     shadowOpacity: 0.05,
@@ -198,29 +243,25 @@ export default function TelaGestorJustificativas() {
                     elevation: 2,
                   }}
                 >
-                  {/* Cabeçalho do Card: Nome, Badge e Botões */}
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      marginBottom: 10,
-                    }}
-                  >
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 10,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 16,
-                          fontWeight: "bold",
-                          color: "#1E293B",
-                        }}
-                      >
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                    
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                      
+                      {/* Checkbox Customizado */}
+                      <View style={{
+                        width: 24,
+                        height: 24,
+                        borderWidth: 2,
+                        borderColor: isSelecionado ? "#2E8B57" : "#CBD5E1",
+                        backgroundColor: isSelecionado ? "#2E8B57" : "transparent",
+                        borderRadius: 4,
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        {isSelecionado && <Feather name="check" size={16} color="#FFF" />}
+                      </View>
+
+                      <Text style={{ fontSize: 16, fontWeight: "bold", color: "#1E293B" }}>
                         {item.nomeUsuario}
                       </Text>
                       <View style={[estilo.badge, bgStyle]}>
@@ -230,62 +271,40 @@ export default function TelaGestorJustificativas() {
                       </View>
                     </View>
 
-                    {/* Botões de Ação */}
-                    <View style={{ flexDirection: "row", gap: 8 }}>
-                      <TouchableOpacity
-                        style={[
-                          estilo.buttonOutline,
-                          estilo.buttonSmall,
-                          { borderColor: "#2E8B57" },
-                        ]}
-                        onPress={() => atualizarStatus(item.id, "Aprovado")}
-                      >
-                        <Text
-                          style={[
-                            estilo.buttonOutlineText,
-                            { color: "#2E8B57" },
-                          ]}
+                    {/* Botões de Ação com Ícones (Ocultos se tiver seleção múltipla ativada) */}
+                    {selecionados.length === 0 && (
+                      <View style={{ flexDirection: "row", gap: 8 }}>
+                        <TouchableOpacity
+                          style={[estilo.buttonOutline, estilo.buttonSmall, { borderColor: "#2E8B57", paddingHorizontal: 10, paddingVertical: 8, alignItems: "center", justifyContent: "center" }]}
+                          onPress={(e) => {
+                            e.stopPropagation(); 
+                            atualizarStatus(item.id, "Aprovado");
+                          }}
                         >
-                          Aprovar
-                        </Text>
-                      </TouchableOpacity>
+                          <Feather name="check" size={20} color="#2E8B57" />
+                        </TouchableOpacity>
 
-                      <TouchableOpacity
-                        style={[
-                          estilo.buttonOutline,
-                          estilo.buttonSmall,
-                          { borderColor: "#EF4444" },
-                        ]}
-                        onPress={() => atualizarStatus(item.id, "Rejeitado")}
-                      >
-                        <Text
-                          style={[
-                            estilo.buttonOutlineText,
-                            { color: "#EF4444" },
-                          ]}
+                        <TouchableOpacity
+                          style={[estilo.buttonOutline, estilo.buttonSmall, { borderColor: "#EF4444", paddingHorizontal: 10, paddingVertical: 8, alignItems: "center", justifyContent: "center" }]}
+                          onPress={(e) => {
+                            e.stopPropagation(); 
+                            atualizarStatus(item.id, "Rejeitado");
+                          }}
                         >
-                          Rejeitar
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
+                          <Feather name="x" size={20} color="#EF4444" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
 
-                  {/* Informações da Justificativa */}
-                  <Text
-                    style={{ fontSize: 12, color: "#64748B", marginBottom: 15 }}
-                  >
-                    {item.tipo || "Motivo não especificado"} ·{" "}
-                    {item.dataFormatada}
+                  <Text style={{ fontSize: 12, color: "#64748B", marginBottom: 15, paddingLeft: 34 }}>
+                    {item.tipo || "Motivo não especificado"} · {item.dataFormatada}
                   </Text>
 
-                  <Text
-                    style={{ fontSize: 14, color: "#334155", lineHeight: 20 }}
-                  >
-                    {item.motivo ||
-                      item.descricao ||
-                      "Sem descrição adicional."}
+                  <Text style={{ fontSize: 14, color: "#334155", lineHeight: 20, paddingLeft: 34 }}>
+                    {item.motivo || item.descricao || "Sem descrição adicional."}
                   </Text>
-                </View>
+                </TouchableOpacity>
               );
             })}
           </View>
