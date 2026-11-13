@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
   TextInput
 } from 'react-native';
 import { auth, db } from "../../firebaseConfig";
@@ -126,23 +127,35 @@ export default function TelaAprendizJustificativas() {
     }
   };
 
-  // Exclui do banco de dados
+  // Função que realmente vai no banco e apaga
+  const confirmarExclusao = async (id) => {
+    try {
+      await deleteDoc(doc(db, "justificativas", id));
+    } catch (error) {
+      console.error("Erro ao excluir:", error);
+      Alert.alert("Erro", "Não foi possível excluir a justificativa. Verifique as regras do Firestore.");
+    }
+  };
+
+  // Função chamada ao apertar o botão
   const excluirJustificativa = (id) => {
-    Alert.alert("Excluir", "Tem certeza que deseja excluir esta justificativa?", [
-      { text: "Cancelar", style: "cancel" },
-      { 
-        text: "Excluir", 
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await deleteDoc(doc(db, "justificativas", id));
-          } catch (error) {
-            console.error("Erro ao excluir:", error);
-            Alert.alert("Erro", "Não foi possível excluir a justificativa.");
-          }
-        }
+    if (Platform.OS === 'web') {
+      // Usa o confirm nativo do navegador para quem testa no PC (Expo Web)
+      const desejaExcluir = window.confirm("Tem certeza que deseja excluir esta justificativa?");
+      if (desejaExcluir) {
+        confirmarExclusao(id);
       }
-    ]);
+    } else {
+      // Usa o Alert do React Native para Android e iOS
+      Alert.alert("Excluir", "Tem certeza que deseja excluir esta justificativa?", [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Excluir", 
+          style: "destructive",
+          onPress: () => confirmarExclusao(id)
+        }
+      ]);
+    }
   };
 
   const getBadgeStyle = (status) => {
