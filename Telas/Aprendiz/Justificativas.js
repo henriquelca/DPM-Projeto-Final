@@ -6,10 +6,12 @@ import {
   SafeAreaView, 
   ScrollView,
   ActivityIndicator,
-  Alert
+  Alert,
+  Modal,
+  TextInput
 } from 'react-native';
-import { auth, db } from "../../firebaseConfig"; // <-- auth adicionado aqui
-import { collection, query, where, onSnapshot, doc, deleteDoc, addDoc } from "firebase/firestore";
+import { auth, db } from "../../firebaseConfig";
+import { collection, query, where, onSnapshot, doc, deleteDoc, addDoc, updateDoc } from "firebase/firestore";
 import styles from '../../css'; 
 import { useAuth } from "../../AuthContext"; 
 
@@ -17,8 +19,14 @@ export default function TelaAprendizJustificativas() {
   const [justificativas, setJustificativas] = useState([]);
   const [carregando, setCarregando] = useState(true);
 
-  const { perfil } = useAuth(); // Puxa os dados (nome, matrícula, etc)
-  const idUsuarioLogado = auth.currentUser?.uid; // Puxa o ID real da autenticação
+  // Estados do Formulário (Modal)
+  const [modalVisivel, setModalVisivel] = useState(false);
+  const [tipoAtual, setTipoAtual] = useState('Falta');
+  const [motivoAtual, setMotivoAtual] = useState('');
+  const [justificativaEditandoId, setJustificativaEditandoId] = useState(null);
+
+  const { perfil } = useAuth();
+  const idUsuarioLogado = auth.currentUser?.uid;
 
   useEffect(() => {
     if (!idUsuarioLogado) {
@@ -70,6 +78,55 @@ export default function TelaAprendizJustificativas() {
     return () => unsub();
   }, [idUsuarioLogado]);
 
+  // Abre o modal para CRIAR uma nova
+  const abrirModalNova = () => {
+    setTipoAtual('Falta');
+    setMotivoAtual('');
+    setJustificativaEditandoId(null);
+    setModalVisivel(true);
+  };
+
+  // Abre o modal para EDITAR uma existente
+  const abrirModalEditar = (item) => {
+    setTipoAtual(item.tipo || 'Falta');
+    setMotivoAtual(item.motivo || item.descricao || '');
+    setJustificativaEditandoId(item.id);
+    setModalVisivel(true);
+  };
+
+  // Salva no banco de dados (Adiciona ou Atualiza)
+  const salvarJustificativa = async () => {
+    if (!motivoAtual.trim()) {
+      Alert.alert("Atenção", "Por favor, escreva o motivo da justificativa.");
+      return;
+    }
+
+    try {
+      if (justificativaEditandoId) {
+        // Fluxo de Edição
+        const ref = doc(db, "justificativas", justificativaEditandoId);
+        await updateDoc(ref, {
+          tipo: tipoAtual,
+          motivo: motivoAtual,
+        });
+      } else {
+        // Fluxo de Criação
+        await addDoc(collection(db, "justificativas"), {
+          usuarioId: idUsuarioLogado, 
+          data: new Date(),
+          tipo: tipoAtual,
+          motivo: motivoAtual,
+          status: "Pendente"
+        });
+      }
+      setModalVisivel(false);
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      Alert.alert("Erro", "Falha ao salvar a justificativa.");
+    }
+  };
+
+  // Exclui do banco de dados
   const excluirJustificativa = (id) => {
     Alert.alert("Excluir", "Tem certeza que deseja excluir esta justificativa?", [
       { text: "Cancelar", style: "cancel" },
@@ -88,23 +145,6 @@ export default function TelaAprendizJustificativas() {
     ]);
   };
 
-  const simularNovaJustificativa = async () => {
-    if (!idUsuarioLogado) return;
-    
-    try {
-      await addDoc(collection(db, "justificativas"), {
-        usuarioId: idUsuarioLogado, 
-        data: new Date(),
-        tipo: "Atraso",
-        motivo: "O ônibus quebrou no caminho (Teste).",
-        status: "Pendente"
-      });
-    } catch (error) {
-      console.error("Erro ao adicionar:", error);
-      Alert.alert("Erro", "Falha ao criar justificativa.");
-    }
-  };
-
   const getBadgeStyle = (status) => {
     switch (status.toLowerCase()) {
       case 'aprovado': return { bg: '#DEF7EC', text: '#03543F' };
@@ -114,21 +154,20 @@ export default function TelaAprendizJustificativas() {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView style={styles.screen || { flex: 1, backgroundColor: '#F8FAFC' }}>
+      <ScrollView contentContainerStyle={styles.content || { padding: 16 }}>
         
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
           <View style={{ flex: 1, paddingRight: 16 }}>
-            <Text style={styles.eyebrow}>ÁREA DO APRENDIZ</Text>
-            {/* Usa o nome do perfil, se existir */}
-            <Text style={styles.pageTitle}>Minhas justificativas</Text>
-            <Text style={styles.pageSubtitle}>
+            <Text style={styles.eyebrow || { fontSize: 12, color: '#64748B', fontWeight: 'bold' }}>ÁREA DO APRENDIZ</Text>
+            <Text style={styles.pageTitle || { fontSize: 24, fontWeight: 'bold', color: '#0F172A' }}>Minhas justificativas</Text>
+            <Text style={styles.pageSubtitle || { fontSize: 14, color: '#475569', marginTop: 4 }}>
               Olá, {perfil?.nome || 'Aprendiz'}! Envie, edite e acompanhe justificativas de faltas ou atrasos.
             </Text>
           </View>
           
-          <TouchableOpacity style={styles.buttonPrimary} onPress={simularNovaJustificativa}>
-            <Text style={styles.buttonPrimaryText}>Nova</Text>
+          <TouchableOpacity style={styles.buttonPrimary || { backgroundColor: '#2E8B57', padding: 10, borderRadius: 8 }} onPress={abrirModalNova}>
+            <Text style={styles.buttonPrimaryText || { color: '#FFF', fontWeight: 'bold' }}>Nova</Text>
           </TouchableOpacity>
         </View>
 
@@ -136,7 +175,7 @@ export default function TelaAprendizJustificativas() {
           <ActivityIndicator size="large" color="#2E8B57" style={{ marginTop: 40 }} />
         ) : justificativas.length === 0 ? (
            <View style={{ padding: 20, alignItems: "center" }}>
-             <Text style={styles.textMuted}>Você ainda não enviou nenhuma justificativa.</Text>
+             <Text style={styles.textMuted || { color: '#64748B' }}>Você ainda não enviou nenhuma justificativa.</Text>
            </View>
         ) : (
           <View style={{ gap: 15 }}>
@@ -152,7 +191,7 @@ export default function TelaAprendizJustificativas() {
                     
                     <View>
                       <View style={[styles.row || { flexDirection: 'row', alignItems: 'center' }, { marginBottom: 4, gap: 10 }]}>
-                        <Text style={[styles.sectionTitle, { fontWeight: 'bold' }]}>{item.tipo || "Geral"}</Text>
+                        <Text style={[styles.sectionTitle, { fontWeight: 'bold', fontSize: 16 }]}>{item.tipo || "Geral"}</Text>
                         
                         <View style={[styles.badgePendente || { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }, { backgroundColor: colors.bg }]}>
                           <Text style={[styles.textoPendente || { fontSize: 12, fontWeight: 'bold' }, { color: colors.text }]}>
@@ -163,9 +202,13 @@ export default function TelaAprendizJustificativas() {
                       <Text style={styles.textMuted || { color: "#64748B", fontSize: 12 }}>{item.dataFormatada}</Text>
                     </View>
 
+                    {/* Botões de Editar e Excluir só aparecem se estiver Pendente */}
                     {item.statusAtual.toLowerCase() === 'pendente' && (
                       <View style={styles.buttonGroup || { flexDirection: 'row', gap: 8 }}>
-                        <TouchableOpacity style={[styles.buttonOutline, styles.buttonSmall || { padding: 8, borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 6 }]}>
+                        <TouchableOpacity 
+                          style={[styles.buttonOutline, styles.buttonSmall || { padding: 8, borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 6 }]}
+                          onPress={() => abrirModalEditar(item)}
+                        >
                           <Text style={styles.buttonOutlineText || { color: '#334155' }}>Editar</Text>
                         </TouchableOpacity>
                         
@@ -188,6 +231,66 @@ export default function TelaAprendizJustificativas() {
           </View>
         )}
       </ScrollView>
+
+      {/* Modal de Nova/Editar Justificativa */}
+      <Modal
+        visible={modalVisivel}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: '#FFF', padding: 24, borderRadius: 12, elevation: 5 }}>
+            
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#0F172A', marginBottom: 16 }}>
+              {justificativaEditandoId ? 'Editar Justificativa' : 'Nova Justificativa'}
+            </Text>
+
+            <Text style={{ fontSize: 14, color: '#475569', marginBottom: 8, fontWeight: '500' }}>Tipo de ocorrência:</Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+              <TouchableOpacity 
+                onPress={() => setTipoAtual('Falta')} 
+                style={{ flex: 1, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: tipoAtual === 'Falta' ? '#2E8B57' : '#E2E8F0', borderRadius: 8, backgroundColor: tipoAtual === 'Falta' ? '#F0FDF4' : '#FFF' }}
+              >
+                <Text style={{ fontWeight: tipoAtual === 'Falta' ? 'bold' : 'normal', color: tipoAtual === 'Falta' ? '#2E8B57' : '#64748B' }}>Falta</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={() => setTipoAtual('Atraso')} 
+                style={{ flex: 1, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: tipoAtual === 'Atraso' ? '#2E8B57' : '#E2E8F0', borderRadius: 8, backgroundColor: tipoAtual === 'Atraso' ? '#F0FDF4' : '#FFF' }}
+              >
+                <Text style={{ fontWeight: tipoAtual === 'Atraso' ? 'bold' : 'normal', color: tipoAtual === 'Atraso' ? '#2E8B57' : '#64748B' }}>Atraso</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={{ fontSize: 14, color: '#475569', marginBottom: 8, fontWeight: '500' }}>Motivo:</Text>
+            <TextInput
+              style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 12, fontSize: 16, color: '#334155', minHeight: 100, textAlignVertical: 'top', backgroundColor: '#F8FAFC' }}
+              multiline
+              placeholder="Explique detalhadamente o que aconteceu..."
+              value={motivoAtual}
+              onChangeText={setMotivoAtual}
+            />
+
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 24, gap: 12 }}>
+              <TouchableOpacity 
+                onPress={() => setModalVisivel(false)} 
+                style={{ paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8 }}
+              >
+                <Text style={{ color: '#64748B', fontWeight: 'bold' }}>Cancelar</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={salvarJustificativa} 
+                style={{ backgroundColor: '#2E8B57', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 }}
+              >
+                <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Enviar</Text>
+              </TouchableOpacity>
+            </View>
+
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
