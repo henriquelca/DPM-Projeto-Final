@@ -3,6 +3,7 @@ import { View, Text } from "react-native";
 
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Importe sua tela de usuários
 import TelaGestorUsuario from "./Usuario";
@@ -15,6 +16,9 @@ import TelaGestorPerfil from "./Perfil";
 const Tab = createBottomTabNavigator();
 
 export default function NavegacaoGestor() {
+  // Espaço da barra de gestos/botões do celular
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       initialRouteName="Dashboard"
@@ -39,9 +43,9 @@ export default function NavegacaoGestor() {
           tabBarStyle: {
             backgroundColor: "#FFFFFF",
             borderTopColor: "#DCEBE2",
-            height: 65,
+            height: 65 + insets.bottom,
             paddingTop: 6,
-            paddingBottom: 6,
+            paddingBottom: 6 + insets.bottom,
           },
 
           tabBarIcon: ({ color, size }) => (

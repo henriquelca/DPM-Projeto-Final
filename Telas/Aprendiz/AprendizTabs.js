@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Importa as telas da mesma pasta (Telas/Aprendiz/)
 import TelaAprendizInicio from './Inicio';
@@ -11,6 +12,9 @@ import TelaAprendizPerfil from './Perfil';
 const Tab = createBottomTabNavigator();
 
 export default function AprendizTabs() {
+  // Espaço da barra de gestos/botões do celular
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -18,8 +22,8 @@ export default function AprendizTabs() {
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopColor: '#DCEBE2',
-          height: 60,
-          paddingBottom: 8,
+          height: 60 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 8,
         },
         tabBarActiveTintColor: '#23804F',
