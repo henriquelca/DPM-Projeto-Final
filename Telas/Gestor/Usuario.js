@@ -84,6 +84,7 @@ export default function TelaGestorUsuario({ navigation }) {
   const [horaEntrada, setHoraEntrada] = useState(HORARIO_PADRAO.horaEntrada);
   const [horaSaida, setHoraSaida] = useState(HORARIO_PADRAO.horaSaida);
   const [diasSemana, setDiasSemana] = useState(HORARIO_PADRAO.diasSemana);
+  const [tipoNovo, setTipoNovo] = useState("aprendiz");
 
   // Dados e estados da lista
   const [usuarios, setUsuarios] = useState([]);
@@ -188,10 +189,13 @@ export default function TelaGestorUsuario({ navigation }) {
       return;
     }
 
-    const erroHorario = erroNoHorario(horaEntrada, horaSaida, diasSemana);
-    if (erroHorario !== "") {
-      setMensagem(erroHorario);
-      return;
+    // O horário de trabalho só existe para aprendiz.
+    if (tipoNovo === "aprendiz") {
+      const erroHorario = erroNoHorario(horaEntrada, horaSaida, diasSemana);
+      if (erroHorario !== "") {
+        setMensagem(erroHorario);
+        return;
+      }
     }
 
     let usuarioAuthCriado = null;
@@ -219,17 +223,20 @@ export default function TelaGestorUsuario({ navigation }) {
       usuarioAuthCriado = credencial.user;
 
       // O perfil é salvo usando o Firestore da sessão principal do gestor.
-      await setDoc(doc(db, "usuarios", credencial.user.uid), {
+      const novoPerfil = {
         nome: nomeLimpo,
         matricula: matriculaLimpa,
         email: emailLimpo,
-        tipo: "aprendiz",
+        tipo: tipoNovo,
         status: "Ativo",
-        horaEntrada: horaEntrada,
-        horaSaida: horaSaida,
-        diasSemana: diasSemana,
         criadoEm: serverTimestamp(),
-      });
+      };
+      if (tipoNovo === "aprendiz") {
+        novoPerfil.horaEntrada = horaEntrada;
+        novoPerfil.horaSaida = horaSaida;
+        novoPerfil.diasSemana = diasSemana;
+      }
+      await setDoc(doc(db, "usuarios", credencial.user.uid), novoPerfil);
 
       setNome("");
       setMatricula("");
@@ -240,7 +247,12 @@ export default function TelaGestorUsuario({ navigation }) {
       setHoraSaida(HORARIO_PADRAO.horaSaida);
       setDiasSemana(HORARIO_PADRAO.diasSemana);
       setMostrarFormulario(false);
-      setSucesso("Aprendiz cadastrado com sucesso.");
+      setSucesso(
+        tipoNovo === "aprendiz"
+          ? "Aprendiz cadastrado com sucesso."
+          : "Gestor cadastrado com sucesso.",
+      );
+      setTipoNovo("aprendiz");
     } catch (erro) {
       console.log("Erro ao cadastrar aprendiz:", erro);
 
@@ -429,7 +441,7 @@ export default function TelaGestorUsuario({ navigation }) {
           {mostrarFormulario && (
             <View style={[estilo.cardElevated, { flex: 1.1, minWidth: 320 }]}>
               <View style={estilo.rowBetween}>
-                <Text style={estilo.sectionTitle}>Nova conta de aprendiz</Text>
+                <Text style={estilo.sectionTitle}>Nova conta</Text>
                 <Pressable
                   onPress={() => {
                     setMostrarFormulario(false);
@@ -441,8 +453,45 @@ export default function TelaGestorUsuario({ navigation }) {
               </View>
 
               <Text style={estilo.textMuted}>
-                A senha será usada pelo aprendiz no primeiro acesso.
+                A senha será usada pelo usuário no primeiro acesso.
               </Text>
+
+              <Text style={estilo.label}>Perfil</Text>
+              <View style={estilo.segmented}>
+                <Pressable
+                  style={[
+                    estilo.segment,
+                    tipoNovo === "aprendiz" && estilo.segmentActive,
+                  ]}
+                  onPress={() => setTipoNovo("aprendiz")}
+                >
+                  <Text
+                    style={[
+                      estilo.segmentText,
+                      tipoNovo === "aprendiz" && estilo.segmentTextActive,
+                    ]}
+                  >
+                    Aprendiz
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  style={[
+                    estilo.segment,
+                    tipoNovo === "gestor" && estilo.segmentActive,
+                  ]}
+                  onPress={() => setTipoNovo("gestor")}
+                >
+                  <Text
+                    style={[
+                      estilo.segmentText,
+                      tipoNovo === "gestor" && estilo.segmentTextActive,
+                    ]}
+                  >
+                    Gestor
+                  </Text>
+                </Pressable>
+              </View>
 
               <Text style={estilo.label}>Nome completo</Text>
               <TextInput
@@ -501,34 +550,38 @@ export default function TelaGestorUsuario({ navigation }) {
                 </View>
               </View>
 
-              <View style={{ flexDirection: "row", gap: 12 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={estilo.label}>Horário de entrada</Text>
-                  <TextInput
-                    style={estilo.input}
-                    placeholder="08:00"
-                    keyboardType="numbers-and-punctuation"
-                    maxLength={5}
-                    value={horaEntrada}
-                    onChangeText={setHoraEntrada}
-                  />
-                </View>
+              {tipoNovo === "aprendiz" && (
+                <View>
+                  <View style={{ flexDirection: "row", gap: 12 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={estilo.label}>Horário de entrada</Text>
+                      <TextInput
+                        style={estilo.input}
+                        placeholder="08:00"
+                        keyboardType="numbers-and-punctuation"
+                        maxLength={5}
+                        value={horaEntrada}
+                        onChangeText={setHoraEntrada}
+                      />
+                    </View>
 
-                <View style={{ flex: 1 }}>
-                  <Text style={estilo.label}>Horário de saída</Text>
-                  <TextInput
-                    style={estilo.input}
-                    placeholder="12:00"
-                    keyboardType="numbers-and-punctuation"
-                    maxLength={5}
-                    value={horaSaida}
-                    onChangeText={setHoraSaida}
-                  />
-                </View>
-              </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={estilo.label}>Horário de saída</Text>
+                      <TextInput
+                        style={estilo.input}
+                        placeholder="12:00"
+                        keyboardType="numbers-and-punctuation"
+                        maxLength={5}
+                        value={horaSaida}
+                        onChangeText={setHoraSaida}
+                      />
+                    </View>
+                  </View>
 
-              <Text style={estilo.label}>Dias de trabalho</Text>
-              <SeletorDias dias={diasSemana} aoMudar={setDiasSemana} />
+                  <Text style={estilo.label}>Dias de trabalho</Text>
+                  <SeletorDias dias={diasSemana} aoMudar={setDiasSemana} />
+                </View>
+              )}
 
               {mensagem !== "" && (
                 <Text style={{ color: "#B03030", marginBottom: 12 }}>
@@ -542,7 +595,11 @@ export default function TelaGestorUsuario({ navigation }) {
                 disabled={salvando}
               >
                 <Text style={estilo.buttonPrimaryText}>
-                  {salvando ? "Cadastrando..." : "Criar conta do aprendiz"}
+                  {salvando
+                    ? "Cadastrando..."
+                    : tipoNovo === "aprendiz"
+                      ? "Criar conta do aprendiz"
+                      : "Criar conta do gestor"}
                 </Text>
               </Pressable>
             </View>
