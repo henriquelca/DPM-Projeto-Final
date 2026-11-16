@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styles from '../../css';
 import { useAuth } from '../../AuthContext';
+import { descricaoHorario, TOLERANCIA_MINUTOS } from '../../frequencia';
 
 export default function PerfilAprendizScreen() {
   const { perfil, sair } = useAuth();
@@ -36,9 +37,15 @@ export default function PerfilAprendizScreen() {
             <Text style={styles.text}>{perfil.matricula}</Text>
           </View>
 
-          <View style={[styles.listItem, styles.listItemLast]}>
+          <View style={styles.listItem}>
             <Text style={styles.label}>E-mail</Text>
             <Text style={styles.text}>{perfil.email}</Text>
+          </View>
+
+          <View style={[styles.listItem, styles.listItemLast]}>
+            <Text style={styles.label}>Horário de trabalho</Text>
+            <Text style={styles.text}>{descricaoHorario(perfil)}</Text>
+            <Text style={styles.textMuted}>Tolerância de {TOLERANCIA_MINUTOS} minutos na entrada</Text>
           </View>
         </View>
 

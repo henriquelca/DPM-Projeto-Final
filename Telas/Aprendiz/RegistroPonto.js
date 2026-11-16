@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import styles from '../../css';
+import styles, { badgeStyle } from '../../css';
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebaseConfig';
+import { useAuth } from '../../AuthContext';
+import { situacaoEntrada } from '../../frequencia';
 
 export default function TelaAprendizRegistroPonto({ navigation }) {
+  const { perfil } = useAuth();
   const [historicoAgrupado, setHistoricoAgrupado] = useState([]);
 
   useEffect(() => {
@@ -122,18 +125,13 @@ export default function TelaAprendizRegistroPonto({ navigation }) {
             const horas = Math.floor(diffMs / (1000 * 60 * 60));
             const minutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
             totalTexto = `${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}min`;
-            
-            if (horas >= 4) {
-              situacao = "Presente";
-              badgeAtual = [styles.badgeSuccess, styles.badgeSuccessText];
-            } else {
-              situacao = "Atraso";
-              badgeAtual = [styles.badgeWarning, styles.badgeWarningText];
-            }
           } else if (dia.entrada && !dia.saida) {
             totalTexto = "Em andamento";
-            situacao = "Presente";
-            badgeAtual = [styles.badgeSuccess, styles.badgeSuccessText];
+          }
+
+          if (dia.entrada) {
+            situacao = situacaoEntrada(dia.entrada, perfil);
+            badgeAtual = badgeStyle(situacao);
           }
 
           return (

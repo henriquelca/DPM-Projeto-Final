@@ -4,8 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import styles from '../../css'; 
 import { auth, db } from '../../firebaseConfig'; 
 import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { useAuth } from '../../AuthContext';
+import { resumoDoMes, jornadasPorDia, situacaoEntrada } from '../../frequencia';
 
 export default function TelaAprendizInicio({ navigation }) {
+  const { perfil } = useAuth();
   const [nome, setNome] = useState("Carregando...");
   const [horaAtual, setHoraAtual] = useState("");
   const [dataAtual, setDataAtual] = useState("");
@@ -49,41 +52,15 @@ export default function TelaAprendizInicio({ navigation }) {
     const unsubPontos = onSnapshot(qPontos, (snap) => {
       const pontos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       
-      const pontosPorDia = {};
-      pontos.forEach(p => {
-        if (!p.dataHora) return;
-        const data = p.dataHora.toDate().toLocaleDateString('pt-BR');
-        if (!pontosPorDia[data]) pontosPorDia[data] = [];
-        pontosPorDia[data].push(p);
-      });
+      setResumo(resumoDoMes(perfil, pontos));
 
-      let presencas = 0;
-      let atrasos = 0;
       const hojeStr = new Date().toLocaleDateString('pt-BR');
-
-      Object.keys(pontosPorDia).forEach(data => {
-        const registrosDoDia = pontosPorDia[data];
-        const entrada = registrosDoDia.find(r => r.tipo === "entrada");
-        const saídas = registrosDoDia.filter(r => r.tipo === "saida");
-        const saida = saídas.length > 0 ? saídas[saídas.length - 1] : null;
-
-        if (entrada && saida) {
-          const diffMs = saida.dataHora.toDate() - entrada.dataHora.toDate();
-          const horasTrabalhadas = diffMs / (1000 * 60 * 60);
-
-          if (horasTrabalhadas >= 4) {
-            presencas++; 
-          } else {
-            atrasos++; 
-          }
-
-          if (data === hojeStr) setStatusHoje("Presente");
-        } else if (entrada && !saida) {
-          if (data === hojeStr) setStatusHoje("Em andamento");
-        }
-      });
-
-      setResumo({ presencas, faltas: 0, atrasos }); 
+      const hoje = jornadasPorDia(pontos).find(j => j.dia === hojeStr);
+      if (hoje && hoje.entrada) {
+        setStatusHoje(situacaoEntrada(hoje.entrada, perfil));
+      } else {
+        setStatusHoje("Pendente");
+      }
     });
 
     // 4. Buscar as Justificativas do banco
@@ -97,8 +74,10 @@ export default function TelaAprendizInicio({ navigation }) {
       
       // Ordena da mais recente para a mais antiga pela data de criação
       justs.sort((a, b) => {
-        const tempoA = a.criadaEm ? a.criadaEm.toDate().getTime() : 0;
-        const tempoB = b.criadaEm ? b.criadaEm.toDate().getTime() : 0;
+        const dataA = a.criadaEm || a.data;
+        const dataB = b.criadaEm || b.data;
+        const tempoA = dataA && dataA.toDate ? dataA.toDate().getTime() : 0;
+        const tempoB = dataB && dataB.toDate ? dataB.toDate().getTime() : 0;
         return tempoB - tempoA;
       });
 
@@ -139,6 +118,11 @@ export default function TelaAprendizInicio({ navigation }) {
             <View style={styles.badgePresente}>
               <Ionicons name="checkmark-circle" size={14} color="#23804F" />
               <Text style={styles.textoBadge}>Presente</Text>
+            </View>
+          )}
+          {statusHoje === "Atraso" && (
+            <View style={[styles.badge, styles.badgeWarning]}>
+              <Text style={[styles.badgeText, styles.badgeWarningText]}>Atraso</Text>
             </View>
           )}
         </View>
@@ -205,11 +189,11 @@ export default function TelaAprendizInicio({ navigation }) {
             let estiloTextoBadge = styles.textoPendente;
             let textoStatus = "Pendente";
 
-            if (just.status === "aprovada") {
+            if (just.status === "Aprovado" || just.status === "aprovada") {
               estiloBadge = styles.badgeAprovado || { backgroundColor: '#D1FAE5', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: '#10B981' };
               estiloTextoBadge = styles.textoAprovado || { color: '#047857', fontSize: 12, fontWeight: 'bold' };
               textoStatus = "Aprovada";
-            } else if (just.status === "recusada") {
+            } else if (just.status === "Rejeitado" || just.status === "recusada") {
               estiloBadge = { backgroundColor: '#FEE2E2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: '#EF4444' };
               estiloTextoBadge = { color: '#B91C1C', fontSize: 12, fontWeight: 'bold' };
               textoStatus = "Recusada";
