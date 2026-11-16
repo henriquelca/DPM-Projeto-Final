@@ -28,6 +28,13 @@ import {
   signOut,
 } from "firebase/auth";
 import { db, cadastroAuth } from "../../firebaseConfig";
+import {
+  HORARIO_PADRAO,
+  NOMES_DIAS,
+  horarioValido,
+  minutosDoHorario,
+  descricaoHorario,
+} from "../../frequencia";
 
 export default function TelaGestorUsuario({ navigation }) {
   const { perfil, sair: sairSessao } = useAuth();
@@ -41,6 +48,9 @@ export default function TelaGestorUsuario({ navigation }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [horaEntrada, setHoraEntrada] = useState(HORARIO_PADRAO.horaEntrada);
+  const [horaSaida, setHoraSaida] = useState(HORARIO_PADRAO.horaSaida);
+  const [diasSemana, setDiasSemana] = useState(HORARIO_PADRAO.diasSemana);
 
   // Dados e estados da lista
   const [usuarios, setUsuarios] = useState([]);
@@ -76,6 +86,9 @@ export default function TelaGestorUsuario({ navigation }) {
               matricula: dados.matricula || "Não informada",
               email: dados.email || "E-mail não informado",
               status: dados.status || "Ativo",
+              horaEntrada: dados.horaEntrada,
+              horaSaida: dados.horaSaida,
+              diasSemana: dados.diasSemana,
             };
           })
           // Contas inativas não aparecem na lista de ativos.
@@ -134,6 +147,21 @@ export default function TelaGestorUsuario({ navigation }) {
       return;
     }
 
+    if (!horarioValido(horaEntrada) || !horarioValido(horaSaida)) {
+      setMensagem("Digite os horários no formato HH:MM, por exemplo 08:00.");
+      return;
+    }
+
+    if (minutosDoHorario(horaSaida) <= minutosDoHorario(horaEntrada)) {
+      setMensagem("O horário de saída precisa ser depois do horário de entrada.");
+      return;
+    }
+
+    if (diasSemana.length === 0) {
+      setMensagem("Escolha pelo menos um dia de trabalho.");
+      return;
+    }
+
     let usuarioAuthCriado = null;
 
     try {
@@ -165,6 +193,9 @@ export default function TelaGestorUsuario({ navigation }) {
         email: emailLimpo,
         tipo: "aprendiz",
         status: "Ativo",
+        horaEntrada: horaEntrada,
+        horaSaida: horaSaida,
+        diasSemana: diasSemana,
         criadoEm: serverTimestamp(),
       });
 
@@ -173,6 +204,9 @@ export default function TelaGestorUsuario({ navigation }) {
       setEmail("");
       setSenha("");
       setConfirmarSenha("");
+      setHoraEntrada(HORARIO_PADRAO.horaEntrada);
+      setHoraSaida(HORARIO_PADRAO.horaSaida);
+      setDiasSemana(HORARIO_PADRAO.diasSemana);
       setMostrarFormulario(false);
       setSucesso("Aprendiz cadastrado com sucesso.");
     } catch (erro) {
@@ -204,6 +238,15 @@ export default function TelaGestorUsuario({ navigation }) {
       // Encerra somente a sessão secundária; a sessão do gestor permanece ativa.
       await signOut(cadastroAuth).catch(() => {});
       setSalvando(false);
+    }
+  };
+
+  // MARCAR OU DESMARCAR UM DIA DE TRABALHO
+  const alternarDia = (dia) => {
+    if (diasSemana.includes(dia)) {
+      setDiasSemana(diasSemana.filter((item) => item !== dia));
+    } else {
+      setDiasSemana([...diasSemana, dia].sort());
     }
   };
 
@@ -393,6 +436,55 @@ export default function TelaGestorUsuario({ navigation }) {
                 </View>
               </View>
 
+              <View style={{ flexDirection: "row", gap: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={estilo.label}>Horário de entrada</Text>
+                  <TextInput
+                    style={estilo.input}
+                    placeholder="08:00"
+                    keyboardType="numbers-and-punctuation"
+                    maxLength={5}
+                    value={horaEntrada}
+                    onChangeText={setHoraEntrada}
+                  />
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <Text style={estilo.label}>Horário de saída</Text>
+                  <TextInput
+                    style={estilo.input}
+                    placeholder="12:00"
+                    keyboardType="numbers-and-punctuation"
+                    maxLength={5}
+                    value={horaSaida}
+                    onChangeText={setHoraSaida}
+                  />
+                </View>
+              </View>
+
+              <Text style={estilo.label}>Dias de trabalho</Text>
+              <View style={[estilo.segmented, { marginBottom: 16 }]}>
+                {NOMES_DIAS.map((nomeDia, dia) => (
+                  <Pressable
+                    key={dia}
+                    style={[
+                      estilo.segment,
+                      diasSemana.includes(dia) && estilo.segmentActive,
+                    ]}
+                    onPress={() => alternarDia(dia)}
+                  >
+                    <Text
+                      style={[
+                        estilo.segmentText,
+                        diasSemana.includes(dia) && estilo.segmentTextActive,
+                      ]}
+                    >
+                      {nomeDia}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
               {mensagem !== "" && (
                 <Text style={{ color: "#B03030", marginBottom: 12 }}>
                   {mensagem}
@@ -466,6 +558,9 @@ export default function TelaGestorUsuario({ navigation }) {
                         Matrícula {usuario.matricula}
                       </Text>
                       <Text style={estilo.textMuted}>{usuario.email}</Text>
+                      <Text style={estilo.textMuted}>
+                        {descricaoHorario(usuario)}
+                      </Text>
                     </View>
 
                     <View style={{ alignItems: "flex-end", gap: 8 }}>
