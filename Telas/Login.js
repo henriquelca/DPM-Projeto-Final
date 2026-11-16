@@ -14,13 +14,33 @@ export default function TelaLogin({ navigation }) {
   // Controlar a visualização da senha
   const [mostrarSenha, setMostrarSenha] = useState(false);
 
-  const { entrar } = useAuth();
+  const [aviso, setAviso] = useState("");
+
+  const { entrar, recuperarSenha } = useAuth();
 
   const entrarNoPortal = async () => {
     setErro("");
+    setAviso("");
 
     try {
       await entrar(email, senha, tipo);
+    } catch (e) {
+      setErro(mensagemDeErro(e));
+    }
+  };
+
+  const esqueciSenha = async () => {
+    setErro("");
+    setAviso("");
+
+    if (email.trim() === "") {
+      setErro("Digite seu e-mail para recuperar a senha.");
+      return;
+    }
+
+    try {
+      await recuperarSenha(email);
+      setAviso("Se este e-mail estiver cadastrado, você receberá um link para criar uma nova senha.");
     } catch (e) {
       setErro(mensagemDeErro(e));
     }
@@ -119,10 +139,18 @@ export default function TelaLogin({ navigation }) {
           <Text style={{ color: "red", marginBottom: 12 }}>{erro}</Text>
         )}
 
+        {aviso !== "" && (
+          <Text style={{ color: "green", marginBottom: 12 }}>{aviso}</Text>
+        )}
+
         {/* BOTÃO ENTRAR */}
         <View>
           <Pressable style={estilo.buttonPrimary} onPress={entrarNoPortal}>
             <Text style={estilo.buttonPrimaryText}>Entrar</Text>
+          </Pressable>
+
+          <Pressable style={{ marginTop: 12, alignItems: "center" }} onPress={esqueciSenha}>
+            <Text style={estilo.passwordToggleText}>Esqueci minha senha</Text>
           </Pressable>
         </View>
       </View>
