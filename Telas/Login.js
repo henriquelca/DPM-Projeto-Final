@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 
-import { View, Text, TextInput, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+} from "react-native";
 
 import estilo from "../css";
 import { useAuth, mensagemDeErro } from "../AuthContext";
@@ -47,7 +55,14 @@ export default function TelaLogin({ navigation }) {
   };
 
   return (
-    <View style={estilo.loginScreen}>
+    <KeyboardAvoidingView
+      style={estilo.loginScreen}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+        keyboardShouldPersistTaps="handled"
+      >
       <View style={estilo.cardElevated}>
         {/* TÍTULO */}
         <View>
@@ -154,6 +169,7 @@ export default function TelaLogin({ navigation }) {
           </Pressable>
         </View>
       </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
