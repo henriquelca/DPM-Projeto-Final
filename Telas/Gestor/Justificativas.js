@@ -3,11 +3,11 @@ import {
   View,
   Text,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
   Alert
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
 import { collection, onSnapshot, doc, updateDoc, writeBatch } from "firebase/firestore";
 import estilo, { badgeStyle } from "../../css";
@@ -146,7 +146,7 @@ export default function TelaGestorJustificativas() {
   const botoesFiltro = ["Todas", "Pendente", "Aprovado", "Rejeitado"];
 
   return (
-    <SafeAreaView style={estilo.screen}>
+    <SafeAreaView style={estilo.screen} edges={["top"]}>
       <ScrollView contentContainerStyle={estilo.content}>
         <Text style={estilo.eyebrow}>ÁREA DA GESTÃO</Text>
         <Text style={estilo.pageTitle}>Análise de justificativas</Text>

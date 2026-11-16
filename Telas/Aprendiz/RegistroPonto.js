@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import styles, { badgeStyle } from '../../css';
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebaseConfig';
@@ -81,6 +82,7 @@ export default function TelaAprendizRegistroPonto({ navigation }) {
   const formatarHora = (data) => data ? data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : "—";
 
   return (
+    <SafeAreaView style={styles.screen} edges={['top']}>
     <ScrollView style={styles.screen} contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 20 }}>
       
       <View style={styles.container}>
@@ -150,5 +152,6 @@ export default function TelaAprendizRegistroPonto({ navigation }) {
         })}
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 };

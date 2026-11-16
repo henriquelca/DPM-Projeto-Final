@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
   useWindowDimensions,
@@ -11,6 +10,7 @@ import {
   Modal,
   TextInput
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig"; 
 import { collection, onSnapshot, doc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
 import { situacaoDoDia } from "../../frequencia";
@@ -260,7 +260,7 @@ export default function TelaGestorRegistrarPonto() {
   );
 
   return (
-    <SafeAreaView style={estilo.screen}>
+    <SafeAreaView style={estilo.screen} edges={["top"]}>
       <ScrollView contentContainerStyle={estilo.content}>
         <Text style={estilo.eyebrow}>ÁREA DA GESTÃO</Text>
         <Text style={estilo.pageTitle}>Registros de ponto</Text>

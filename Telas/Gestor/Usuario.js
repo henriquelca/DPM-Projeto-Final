@@ -8,6 +8,7 @@ import {
   Modal,
   ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import estilo from "../../css";
 import { useAuth } from "../../AuthContext";
@@ -369,7 +370,7 @@ export default function TelaGestorUsuario({ navigation }) {
   ).length;
 
   return (
-    <View style={estilo.screen}>
+    <SafeAreaView style={estilo.screen} edges={["top"]}>
       {/* CABEÇALHO */}
       <View style={estilo.header}>
         <View>
@@ -809,6 +810,6 @@ export default function TelaGestorUsuario({ navigation }) {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }

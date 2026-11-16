@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import styles from '../../css'; 
 import { auth, db } from '../../firebaseConfig'; 
@@ -93,6 +94,7 @@ export default function TelaAprendizInicio({ navigation }) {
   }, []);
 
   return (
+    <SafeAreaView style={styles.screen} edges={['top']}>
     <ScrollView style={styles.screen}>
       
       <View style={styles.container}>
@@ -215,5 +217,6 @@ export default function TelaAprendizInicio({ navigation }) {
       </View>
 
     </ScrollView>
+    </SafeAreaView>
   );
 };

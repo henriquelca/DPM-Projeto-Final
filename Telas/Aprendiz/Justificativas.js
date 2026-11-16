@@ -3,7 +3,6 @@ import {
   View, 
   Text, 
   TouchableOpacity, 
-  SafeAreaView, 
   ScrollView,
   ActivityIndicator,
   Alert,
@@ -11,6 +10,7 @@ import {
   Platform,
   TextInput
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth, db } from "../../firebaseConfig";
 import { collection, query, where, onSnapshot, doc, deleteDoc, addDoc, updateDoc } from "firebase/firestore";
 import styles from '../../css'; 
@@ -167,7 +167,7 @@ export default function TelaAprendizJustificativas() {
   };
 
   return (
-    <SafeAreaView style={styles.screen || { flex: 1, backgroundColor: '#F8FAFC' }}>
+    <SafeAreaView style={styles.screen || { flex: 1, backgroundColor: '#F8FAFC' }} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content || { padding: 16 }}>
         
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
