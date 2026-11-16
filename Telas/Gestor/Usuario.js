@@ -31,10 +31,42 @@ import { db, cadastroAuth } from "../../firebaseConfig";
 import {
   HORARIO_PADRAO,
   NOMES_DIAS,
-  horarioValido,
-  minutosDoHorario,
+  erroNoHorario,
+  horarioDoAprendiz,
   descricaoHorario,
 } from "../../frequencia";
+
+// MARCAR OU DESMARCAR UM DIA DE TRABALHO
+function alternarDia(dias, dia) {
+  if (dias.includes(dia)) {
+    return dias.filter((item) => item !== dia);
+  }
+  return [...dias, dia].sort();
+}
+
+// BOTÕES DE DOM A SÁB PARA ESCOLHER OS DIAS DE TRABALHO
+function SeletorDias({ dias, aoMudar }) {
+  return (
+    <View style={[estilo.segmented, { marginBottom: 16 }]}>
+      {NOMES_DIAS.map((nomeDia, dia) => (
+        <Pressable
+          key={dia}
+          style={[estilo.segment, dias.includes(dia) && estilo.segmentActive]}
+          onPress={() => aoMudar(alternarDia(dias, dia))}
+        >
+          <Text
+            style={[
+              estilo.segmentText,
+              dias.includes(dia) && estilo.segmentTextActive,
+            ]}
+          >
+            {nomeDia}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
 
 export default function TelaGestorUsuario({ navigation }) {
   const { perfil, sair: sairSessao } = useAuth();
@@ -66,6 +98,14 @@ export default function TelaGestorUsuario({ navigation }) {
   // Controle da confirmação em duas etapas
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
   const [etapaExclusao, setEtapaExclusao] = useState(0);
+
+  // Controle da edição de horário
+  const [usuarioEditando, setUsuarioEditando] = useState(null);
+  const [editEntrada, setEditEntrada] = useState("");
+  const [editSaida, setEditSaida] = useState("");
+  const [editDias, setEditDias] = useState([]);
+  const [erroEdicao, setErroEdicao] = useState("");
+  const [salvandoHorario, setSalvandoHorario] = useState(false);
 
   // BUSCAR APRENDIZES NO FIRESTORE EM TEMPO REAL
   useEffect(() => {
@@ -147,18 +187,9 @@ export default function TelaGestorUsuario({ navigation }) {
       return;
     }
 
-    if (!horarioValido(horaEntrada) || !horarioValido(horaSaida)) {
-      setMensagem("Digite os horários no formato HH:MM, por exemplo 08:00.");
-      return;
-    }
-
-    if (minutosDoHorario(horaSaida) <= minutosDoHorario(horaEntrada)) {
-      setMensagem("O horário de saída precisa ser depois do horário de entrada.");
-      return;
-    }
-
-    if (diasSemana.length === 0) {
-      setMensagem("Escolha pelo menos um dia de trabalho.");
+    const erroHorario = erroNoHorario(horaEntrada, horaSaida, diasSemana);
+    if (erroHorario !== "") {
+      setMensagem(erroHorario);
       return;
     }
 
@@ -241,12 +272,45 @@ export default function TelaGestorUsuario({ navigation }) {
     }
   };
 
-  // MARCAR OU DESMARCAR UM DIA DE TRABALHO
-  const alternarDia = (dia) => {
-    if (diasSemana.includes(dia)) {
-      setDiasSemana(diasSemana.filter((item) => item !== dia));
-    } else {
-      setDiasSemana([...diasSemana, dia].sort());
+  // ABRIR A EDIÇÃO DE HORÁRIO
+  const abrirEdicaoHorario = (usuario) => {
+    const horario = horarioDoAprendiz(usuario);
+    setSucesso("");
+    setErroEdicao("");
+    setEditEntrada(horario.horaEntrada);
+    setEditSaida(horario.horaSaida);
+    setEditDias(horario.diasSemana);
+    setUsuarioEditando(usuario);
+  };
+
+  const fecharEdicaoHorario = () => {
+    if (salvandoHorario) return;
+    setUsuarioEditando(null);
+  };
+
+  // SALVAR O NOVO HORÁRIO NO FIRESTORE
+  const salvarHorario = async () => {
+    const erroHorario = erroNoHorario(editEntrada, editSaida, editDias);
+    if (erroHorario !== "") {
+      setErroEdicao(erroHorario);
+      return;
+    }
+
+    try {
+      setSalvandoHorario(true);
+      await updateDoc(doc(db, "usuarios", usuarioEditando.id), {
+        horaEntrada: editEntrada,
+        horaSaida: editSaida,
+        diasSemana: editDias,
+        atualizadoEm: serverTimestamp(),
+      });
+      setSucesso(`Horário de ${usuarioEditando.nome} atualizado.`);
+      setUsuarioEditando(null);
+    } catch (erro) {
+      console.log("Erro ao salvar horário:", erro);
+      setErroEdicao("Não foi possível salvar o horário.");
+    } finally {
+      setSalvandoHorario(false);
     }
   };
 
@@ -463,27 +527,7 @@ export default function TelaGestorUsuario({ navigation }) {
               </View>
 
               <Text style={estilo.label}>Dias de trabalho</Text>
-              <View style={[estilo.segmented, { marginBottom: 16 }]}>
-                {NOMES_DIAS.map((nomeDia, dia) => (
-                  <Pressable
-                    key={dia}
-                    style={[
-                      estilo.segment,
-                      diasSemana.includes(dia) && estilo.segmentActive,
-                    ]}
-                    onPress={() => alternarDia(dia)}
-                  >
-                    <Text
-                      style={[
-                        estilo.segmentText,
-                        diasSemana.includes(dia) && estilo.segmentTextActive,
-                      ]}
-                    >
-                      {nomeDia}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+              <SeletorDias dias={diasSemana} aoMudar={setDiasSemana} />
 
               {mensagem !== "" && (
                 <Text style={{ color: "#B03030", marginBottom: 12 }}>
@@ -573,6 +617,15 @@ export default function TelaGestorUsuario({ navigation }) {
                       </View>
 
                       <Pressable
+                        style={[estilo.buttonOutline, estilo.buttonSmall]}
+                        onPress={() => abrirEdicaoHorario(usuario)}
+                      >
+                        <Text style={estilo.buttonOutlineText}>
+                          Editar horário
+                        </Text>
+                      </Pressable>
+
+                      <Pressable
                         style={[estilo.buttonDanger, estilo.buttonSmall]}
                         onPress={() => confirmarExclusao(usuario)}
                       >
@@ -586,6 +639,102 @@ export default function TelaGestorUsuario({ navigation }) {
           </View>
         </View>
       </ScrollView>
+
+      {/* MODAL DE EDIÇÃO DE HORÁRIO */}
+      <Modal
+        transparent
+        visible={usuarioEditando !== null}
+        animationType="fade"
+        onRequestClose={fecharEdicaoHorario}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.45)",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 24,
+          }}
+        >
+          <View
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              backgroundColor: "#FFFFFF",
+              borderWidth: 1,
+              borderColor: "#2E8B57",
+              padding: 24,
+            }}
+          >
+            <Text style={estilo.sectionTitle}>Editar horário</Text>
+            <Text style={[estilo.textMuted, { marginBottom: 8 }]}>
+              {usuarioEditando?.nome}
+            </Text>
+
+            <View style={{ flexDirection: "row", gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={estilo.label}>Entrada</Text>
+                <TextInput
+                  style={estilo.input}
+                  placeholder="08:00"
+                  keyboardType="numbers-and-punctuation"
+                  maxLength={5}
+                  value={editEntrada}
+                  onChangeText={setEditEntrada}
+                />
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <Text style={estilo.label}>Saída</Text>
+                <TextInput
+                  style={estilo.input}
+                  placeholder="12:00"
+                  keyboardType="numbers-and-punctuation"
+                  maxLength={5}
+                  value={editSaida}
+                  onChangeText={setEditSaida}
+                />
+              </View>
+            </View>
+
+            <Text style={estilo.label}>Dias de trabalho</Text>
+            <SeletorDias dias={editDias} aoMudar={setEditDias} />
+
+            {erroEdicao !== "" && (
+              <Text style={{ color: "#B03030", marginBottom: 12 }}>
+                {erroEdicao}
+              </Text>
+            )}
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                flexWrap: "wrap",
+                gap: 10,
+              }}
+            >
+              <Pressable
+                style={estilo.buttonOutline}
+                onPress={fecharEdicaoHorario}
+                disabled={salvandoHorario}
+              >
+                <Text style={estilo.buttonOutlineText}>Cancelar</Text>
+              </Pressable>
+
+              <Pressable
+                style={estilo.buttonPrimary}
+                onPress={salvarHorario}
+                disabled={salvandoHorario}
+              >
+                <Text style={estilo.buttonPrimaryText}>
+                  {salvandoHorario ? "Salvando..." : "Salvar"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* MODAL DE CONFIRMAÇÃO EM DUAS ETAPAS */}
       <Modal

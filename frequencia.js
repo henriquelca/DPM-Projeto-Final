@@ -30,6 +30,19 @@ export function minutosDoHorario(texto) {
   return Number(partes[0]) * 60 + Number(partes[1]);
 }
 
+export function erroNoHorario(horaEntrada, horaSaida, diasSemana) {
+  if (!horarioValido(horaEntrada) || !horarioValido(horaSaida)) {
+    return "Digite os horários no formato HH:MM, por exemplo 08:00.";
+  }
+  if (minutosDoHorario(horaSaida) <= minutosDoHorario(horaEntrada)) {
+    return "O horário de saída precisa ser depois do horário de entrada.";
+  }
+  if (diasSemana.length === 0) {
+    return "Escolha pelo menos um dia de trabalho.";
+  }
+  return "";
+}
+
 export function descricaoHorario(aprendiz) {
   const horario = horarioDoAprendiz(aprendiz);
   const dias = [];
