@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { db } from "../../firebaseConfig"; 
 import { collection, onSnapshot, doc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
+import { situacaoDoDia } from "../../frequencia";
 import estilo, { badgeStyle } from "../../css";
 
 export default function TelaGestorRegistrarPonto() {
@@ -86,6 +87,7 @@ export default function TelaGestorRegistrarPonto() {
       let situacao = "Ausente"; 
       let docIdEntrada = null;
       let docIdSaida = null;
+      let horaEntrada = null;
 
       pontosBrutos.forEach((ponto) => {
         if (ponto.usuarioId === user.id && ponto.dataHora) {
@@ -100,7 +102,7 @@ export default function TelaGestorRegistrarPonto() {
             if (ponto.tipo === 'entrada') {
               entrada = horaFormatada;
               docIdEntrada = ponto.id;
-              situacao = "Presente"; 
+              horaEntrada = pData;
             } else if (ponto.tipo === 'saida') {
               saida = horaFormatada;
               docIdSaida = ponto.id;
@@ -108,6 +110,8 @@ export default function TelaGestorRegistrarPonto() {
           }
         }
       });
+
+      situacao = situacaoDoDia(horaEntrada, user, hoje);
 
       listaFinal.push({
         chave: user.id,
