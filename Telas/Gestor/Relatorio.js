@@ -9,10 +9,11 @@ import {
   jornadasPorDia,
   situacaoEntrada,
   formatarHora,
-  HORA_ENTRADA,
+  descricaoHorario,
+  diasDeFalta,
   TOLERANCIA_MINUTOS,
   LIMITE_HORAS_DIA,
-} from "./frequencia";
+} from "../../frequencia";
 
 const CHAVE_GEMINI = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 const MODELO_GEMINI = process.env.EXPO_PUBLIC_GEMINI_MODEL || "gemini-flash-lite-latest";
@@ -49,17 +50,23 @@ async function perguntarAoGemini(pergunta) {
   return dados.candidates[0].content.parts[0].text;
 }
 
-function montarPergunta(aprendiz, periodo, jornadas, justificativas, pedido, diasExcesso) {
+function montarPergunta(aprendiz, periodo, jornadas, justificativas, pedido, diasExcesso, faltas) {
   let texto = "";
   texto += "Você é um assistente da gestão da Escola Christus que analisa a frequência de jovens aprendizes.\n";
   texto += "Responda em português do Brasil, em texto simples (sem markdown), em no máximo 3 parágrafos curtos.\n";
-  texto += "Regras: entrada esperada às " + HORA_ENTRADA + ":00 com " + TOLERANCIA_MINUTOS + " minutos de tolerância. ";
+  texto += "Regras: o aprendiz deve chegar no horário de entrada dele, com " + TOLERANCIA_MINUTOS + " minutos de tolerância. ";
   texto += "Jornadas acima de " + LIMITE_HORAS_DIA + "h são excesso de carga horária (risco de burnout) e devem ser destacadas como ALERTA.\n";
   texto += "Considere apenas os dados abaixo. Se faltarem dados, diga isso.\n\n";
 
   texto += "Aprendiz: " + aprendiz.nome + " (matrícula " + aprendiz.matricula + ")\n";
+  texto += "Horário de trabalho: " + descricaoHorario(aprendiz) + "\n";
   texto += "Período: " + periodo.rotulo + "\n";
   texto += "Dias com excesso de jornada: " + diasExcesso.length + "\n";
+  texto += "Faltas (dias de trabalho sem registro de entrada): " + faltas.length;
+  if (faltas.length > 0) {
+    texto += " (" + faltas.join(", ") + ")";
+  }
+  texto += "\n";
 
   texto += "Registros de ponto por dia:\n";
   if (jornadas.length === 0) {
@@ -72,7 +79,7 @@ function montarPergunta(aprendiz, periodo, jornadas, justificativas, pedido, dia
     }
     texto += jornada.dia + ": entrada " + formatarHora(jornada.entrada);
     texto += ", saída " + formatarHora(jornada.saida);
-    texto += ", " + horas + ", " + situacaoEntrada(jornada.entrada) + "\n";
+    texto += ", " + horas + ", " + situacaoEntrada(jornada.entrada, aprendiz) + "\n";
   }
 
   texto += "Justificativas:\n";
@@ -80,7 +87,11 @@ function montarPergunta(aprendiz, periodo, jornadas, justificativas, pedido, dia
     texto += "(nenhuma)\n";
   }
   for (const justificativa of justificativas) {
-    texto += justificativa.data + ": " + justificativa.motivo + " (" + justificativa.status + ")\n";
+    let data = "data não informada";
+    if (justificativa.data && justificativa.data.toDate) {
+      data = justificativa.data.toDate().toLocaleDateString("pt-BR");
+    }
+    texto += data + ": " + (justificativa.tipo || "Justificativa") + " - " + justificativa.motivo + " (" + justificativa.status + ")\n";
   }
 
   texto += "\nPedido da gestão: " + pedido;
@@ -105,7 +116,9 @@ export default function TelaGestorRelatorio() {
         resultadoConsulta.forEach((documento) => {
           const aprendiz = documento.data();
           aprendiz.id = documento.id;
-          lista.push(aprendiz);
+          if (aprendiz.status !== "Inativo") {
+            lista.push(aprendiz);
+          }
         });
         setAprendizes(lista);
         if (lista.length > 0) {
@@ -169,7 +182,8 @@ export default function TelaGestorRelatorio() {
         }
       }
 
-      const pergunta = montarPergunta(selecionado, periodo, jornadas, justificativas, pedido, diasExcesso);
+      const faltas = diasDeFalta(selecionado, jornadas, inicioDoPeriodo);
+      const pergunta = montarPergunta(selecionado, periodo, jornadas, justificativas, pedido, diasExcesso, faltas);
       const texto = await perguntarAoGemini(pergunta);
 
       setResultado({

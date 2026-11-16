@@ -5,7 +5,7 @@ import { collection, query, where, onSnapshot, Timestamp } from "firebase/firest
 import { db } from "../../firebaseConfig";
 import estilo, { colors } from "../../css";
 import CabecalhoGestor from "./Cabecalho";
-import { formatarHora, situacaoEntrada, corDaSituacao } from "./frequencia";
+import { formatarHora, situacaoDoDia, corDaSituacao } from "../../frequencia";
 
 export default function TelaGestorDeshboard({ navigation }) {
   const [aprendizes, setAprendizes] = useState(null);
@@ -61,6 +61,8 @@ export default function TelaGestorDeshboard({ navigation }) {
   let atrasos = 0;
   let ausentes = 0;
 
+  const agora = new Date();
+
   if (!carregando) {
     for (const aprendiz of aprendizes) {
       let entrada = null;
@@ -73,7 +75,7 @@ export default function TelaGestorDeshboard({ navigation }) {
         }
       }
 
-      const situacao = situacaoEntrada(entrada);
+      const situacao = situacaoDoDia(entrada, aprendiz, agora);
       if (situacao === "Presente") presentes++;
       if (situacao === "Atraso") atrasos++;
       if (situacao === "Ausente") ausentes++;
@@ -82,7 +84,12 @@ export default function TelaGestorDeshboard({ navigation }) {
     }
   }
 
-  const total = movimentacao.length;
+  let total = 0;
+  for (const item of movimentacao) {
+    if (item.situacao !== "Folga") {
+      total++;
+    }
+  }
 
   function porcentagem(quantidade) {
     if (total === 0) {
@@ -157,7 +164,7 @@ export default function TelaGestorDeshboard({ navigation }) {
                 </Pressable>
               </View>
 
-              {total === 0 && (
+              {movimentacao.length === 0 && (
                 <Text style={[estilo.textMuted, { paddingVertical: 12 }]}>
                   Nenhum aprendiz cadastrado.
                 </Text>

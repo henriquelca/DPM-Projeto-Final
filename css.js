@@ -799,6 +799,8 @@ export const badgeStyle = (status) => {
     case 'Falta':
     case 'Rejeitado':
       return [styles.badgeDanger, styles.badgeDangerText];
+    case 'Folga':
+      return [{ backgroundColor: colors.surface, borderColor: colors.divider }, { color: colors.textMuted }];
     default:
       return [styles.badgeSuccess, styles.badgeSuccessText];
   }
