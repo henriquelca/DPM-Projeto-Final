@@ -47,7 +47,13 @@ async function perguntarAoGemini(pergunta) {
   if (!resposta.ok) {
     throw new Error(dados.error.message);
   }
-  return dados.candidates[0].content.parts[0].text;
+  let texto = "";
+  for (const parte of dados.candidates[0].content.parts) {
+    if (parte.text && !parte.thought) {
+      texto += parte.text;
+    }
+  }
+  return texto;
 }
 
 function montarPergunta(aprendiz, periodo, jornadas, justificativas, pedido, diasExcesso, faltas) {
