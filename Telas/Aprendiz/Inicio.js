@@ -51,7 +51,7 @@ export default function TelaAprendizInicio({ navigation }) {
     );
 
     const unsubPontos = onSnapshot(qPontos, (snap) => {
-      const pontos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const pontos = snap.docs.map(d => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }));
       
       setResumo(resumoDoMes(perfil, pontos));
 

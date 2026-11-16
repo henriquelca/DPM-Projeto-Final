@@ -20,7 +20,7 @@ export default function TelaAprendizRegistroPonto({ navigation }) {
     );
 
     const unsubscribe = onSnapshot(q, (snap) => {
-      const pontos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const pontos = snap.docs.map(d => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }));
       
       const agrupados = {};
       pontos.forEach(p => {
